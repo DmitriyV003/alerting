@@ -58,6 +58,7 @@ func (metricService *MetricService) gatherMetrics() {
 
 func (metricService *MetricService) GatherMetricsByInterval(seconds int) {
 	ticker := time.NewTicker(time.Duration(seconds) * time.Second)
+	defer ticker.Stop()
 
 	for range ticker.C {
 		metricService.gatherMetrics()
