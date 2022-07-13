@@ -2,15 +2,22 @@ package main
 
 import (
 	"github.com/dmitriy/alerting/internal/server/handlers"
+	"github.com/dmitriy/alerting/internal/server/storage/memory"
+	"github.com/gin-gonic/gin"
 	"log"
-	"net/http"
 )
 
 func main() {
-	mux := http.NewServeMux()
-	updateMetricHandler := handlers.NewUpdateMetricHandler()
-	mux.HandleFunc("/update/", updateMetricHandler.Handle)
+	router := gin.Default()
 
-	log.Println("Server started on: http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", mux))
+	store := memory.New()
+	updateMetricHandler := handlers.NewUpdateMetricHandler(store)
+	getAllMetricsHandler := handlers.NewGetAllMetricHandler(store)
+	getMetricByTypeAndNameHandler := handlers.NewGetMetricByTypeAndNameHandler(store)
+
+	router.GET("/", getAllMetricsHandler.Handle)
+	router.GET("/value/:type/:name", getMetricByTypeAndNameHandler.Handle)
+	router.POST("/update/:type/:name/:value", updateMetricHandler.Handle)
+
+	log.Fatal(router.Run())
 }
