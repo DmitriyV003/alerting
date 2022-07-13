@@ -2,7 +2,9 @@ package memory
 
 import (
 	"errors"
+	"fmt"
 	"github.com/dmitriy/alerting/internal/server/model"
+	"github.com/dmitriy/alerting/internal/server/storage"
 	"strconv"
 	"sync"
 )
@@ -34,6 +36,61 @@ func NewCounter(name string) model.Counter {
 		},
 		Value: 0,
 	}
+}
+
+func (s *Storage) GetByNameAndType(name string, metricType string) (interface{}, error) {
+	if metricType == "gauge" {
+		metric, ok := s.Gauges.Load(name)
+
+		if !ok {
+			return nil, errors.New("not found")
+		}
+
+		gauge := metric.(model.Gauge)
+
+		return gauge.Value, nil
+	} else if metricType == "counter" {
+		metric, ok := s.Counters.Load(name)
+
+		if !ok {
+			return nil, errors.New("not found")
+		}
+
+		counter := metric.(model.Counter)
+
+		return counter.Value, nil
+	}
+
+	return nil, errors.New("unknown type")
+}
+
+func (s *Storage) GetAll() *[]storage.MetricData {
+	var metrics []storage.MetricData
+
+	s.Gauges.Range(func(key, value interface{}) bool {
+		metric := value.(model.Gauge)
+		metricData := storage.MetricData{
+			Name:  key.(string),
+			Value: fmt.Sprint(metric.Value),
+		}
+		metrics = append(metrics, metricData)
+
+		return true
+	})
+
+	s.Counters.Range(func(key, value interface{}) bool {
+		metric := value.(model.Counter)
+		metricData := storage.MetricData{
+			Name:  key.(string),
+			Value: fmt.Sprint(metric.Value),
+		}
+		metrics = append(metrics, metricData)
+
+		return true
+	})
+
+	return &metrics
+
 }
 
 func (s *Storage) UpdateMetric(metric string, value string, metricType string) error {
