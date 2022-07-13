@@ -30,12 +30,15 @@ func TestMetricService_gatherMetrics(t *testing.T) {
 			}
 			metricService.gatherMetrics()
 
-			metric, _ := metricService.Health.Gauges.Load("Alloc")
+			metric, isOk := metricService.Health.Gauges.Load("Alloc")
 			metricCasted := metric.(models.Gauge)
+
 			assert.Equal(t, metricCasted.Name, "Alloc")
+			assert.True(t, isOk)
 
 			counterMetric, _ := metricService.Health.Counters.Load("PollCount")
 			counterMetricCasted := counterMetric.(models.Counter)
+
 			assert.Equal(t, counterMetricCasted.Name, "PollCount")
 		})
 	}
