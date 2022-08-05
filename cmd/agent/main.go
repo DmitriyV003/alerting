@@ -3,7 +3,18 @@ package main
 import (
 	"github.com/dmitriy/alerting/internal/agent/client"
 	"github.com/dmitriy/alerting/internal/agent/service"
+	log "github.com/sirupsen/logrus"
+	"os"
 )
+
+func init() {
+	log.SetFormatter(&log.TextFormatter{
+		DisableColors: false,
+		FullTimestamp: true,
+	})
+	log.SetOutput(os.Stdout)
+	log.SetLevel(log.InfoLevel)
+}
 
 func main() {
 

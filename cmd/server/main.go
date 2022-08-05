@@ -5,7 +5,7 @@ import (
 	"github.com/dmitriy/alerting/internal/server/storage/memory"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 )
 
@@ -25,6 +25,8 @@ func main() {
 	router.Get("/", getAllMetricsHandler.Handle)
 	router.Get("/value/{type}/{name}", getMetricByTypeAndNameHandler.Handle)
 	router.Post("/update/{type}/{name}/{value}", updateMetricHandler.Handle)
+
+	log.Info("server is starting at http://localhost:8080")
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
