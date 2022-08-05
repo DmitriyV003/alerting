@@ -3,9 +3,11 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/dmitriy/alerting/internal/server/applicationerrors"
 	"github.com/dmitriy/alerting/internal/server/storage"
 	"github.com/go-chi/chi/v5"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 )
 
@@ -24,14 +26,34 @@ func (h *GetMetricByTypeAndNameHandler) Handle(w http.ResponseWriter, r *http.Re
 	metricType := chi.URLParam(r, "type")
 	metric, err := h.storage.GetByNameAndType(name, metricType)
 
-	metricBytes, _ := json.Marshal(metric)
-
-	if err != nil && errors.Is(err, applicationerrors.ErrNotFound) {
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+	if name == "" {
+		log.Info(fmt.Printf("Metric Not Found "))
+		applicationerrors.WriteHTTPError(&w, http.StatusNotFound)
 
 		return
-	} else if err != nil && errors.Is(err, applicationerrors.ErrUnknownType) {
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+	}
+
+	if err != nil {
+		switch {
+		case errors.Is(err, applicationerrors.ErrNotFound):
+			log.Info(fmt.Printf("Not Found"))
+			applicationerrors.WriteHTTPError(&w, http.StatusNotFound)
+		case errors.Is(err, applicationerrors.ErrUnknownType):
+			log.Info("Unknown metric type")
+			applicationerrors.WriteHTTPError(&w, http.StatusBadRequest)
+		default:
+			log.Info("Unknown error")
+			applicationerrors.WriteHTTPError(&w, http.StatusInternalServerError)
+		}
+
+		return
+	}
+
+	metricBytes, err := json.Marshal(metric)
+
+	if err != nil {
+		log.Info("Unknown error")
+		applicationerrors.WriteHTTPError(&w, http.StatusInternalServerError)
 
 		return
 	}
@@ -39,6 +61,8 @@ func (h *GetMetricByTypeAndNameHandler) Handle(w http.ResponseWriter, r *http.Re
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(metricBytes)
 	if err != nil {
+		log.Info("Unknown error")
+
 		return
 	}
 }

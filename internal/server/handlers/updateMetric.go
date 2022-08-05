@@ -24,7 +24,7 @@ func (handler *UpdateMetricHandler) Handle(w http.ResponseWriter, r *http.Reques
 	value := chi.URLParam(r, "value")
 
 	if name == "" {
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		applicationerrors.WriteHTTPError(&w, http.StatusNotFound)
 
 		return
 	}
@@ -32,11 +32,11 @@ func (handler *UpdateMetricHandler) Handle(w http.ResponseWriter, r *http.Reques
 	err := handler.storage.UpdateMetric(name, value, metricType)
 
 	if err != nil && errors.Is(err, applicationerrors.ErrInvalidType) {
-		http.Error(w, http.StatusText(http.StatusNotImplemented), http.StatusNotImplemented)
+		applicationerrors.WriteHTTPError(&w, http.StatusNotImplemented)
 
 		return
 	} else if err != nil && errors.Is(err, applicationerrors.ErrInvalidValue) {
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		applicationerrors.WriteHTTPError(&w, http.StatusBadRequest)
 
 		return
 	}

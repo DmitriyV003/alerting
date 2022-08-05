@@ -3,9 +3,8 @@ package client
 import (
 	"fmt"
 	"github.com/dmitriy/alerting/internal/agent/models"
-	"io"
+	log "github.com/sirupsen/logrus"
 	"net/http"
-	"os"
 	"time"
 )
 
@@ -29,8 +28,19 @@ func (sender *Sender) SendWithInterval(url string, metrics *models.Health, secon
 		metrics.Counters.Range(func(key, value interface{}) bool {
 			metric, _ := value.(models.Counter)
 			buildURL := url + fmt.Sprintf("/update/counter/%s/%d", metric.Name, metric.Value)
-			sender.sendRequest(buildURL)
-			fmt.Println(buildURL)
+			err := sender.sendRequest(buildURL)
+
+			if err != nil {
+				log.WithFields(log.Fields{
+					"url": buildURL,
+				}).Info("Error to send data")
+
+				return false
+			}
+
+			log.WithFields(log.Fields{
+				"url": buildURL,
+			}).Info("Send metric data")
 
 			return true
 		})
@@ -38,25 +48,37 @@ func (sender *Sender) SendWithInterval(url string, metrics *models.Health, secon
 		metrics.Gauges.Range(func(key, value interface{}) bool {
 			metric, _ := value.(models.Gauge)
 			buildURL := url + fmt.Sprintf("/update/gauge/%s/%f", metric.Name, metric.Value)
-			sender.sendRequest(buildURL)
-			fmt.Println(buildURL)
+			err := sender.sendRequest(buildURL)
+
+			if err != nil {
+				log.WithFields(log.Fields{
+					"url": buildURL,
+				}).Info("Error to send data")
+
+				return false
+			}
+
+			log.WithFields(log.Fields{
+				"url": buildURL,
+			}).Info("Send metric data")
 
 			return true
 		})
 	}
 }
 
-func (sender *Sender) sendRequest(url string) {
+func (sender *Sender) sendRequest(url string) error {
 	request, _ := http.NewRequest(http.MethodPost, url, nil)
 	request.Header.Set("Content-Type", "text/plain")
 	res, err := sender.client.Do(request)
 
-	defer func(Body io.ReadCloser) {
-		_ = Body.Close()
-	}(res.Body)
-
 	if err != nil {
-		fmt.Printf("Request failed with status: %d \n", res.StatusCode)
-		os.Exit(1)
+		log.WithFields(log.Fields{}).Error(fmt.Printf("Request failed with status: %d \n", res.StatusCode))
+
+		return err
 	}
+
+	defer res.Body.Close()
+
+	return nil
 }

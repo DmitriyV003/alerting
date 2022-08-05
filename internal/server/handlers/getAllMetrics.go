@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/dmitriy/alerting/internal/server/applicationerrors"
 	"github.com/dmitriy/alerting/internal/server/storage"
 	"net/http"
 )
@@ -18,13 +19,19 @@ func NewGetAllMetricHandler(store storage.MetricStorage) *GetAllMetricHandler {
 
 func (h *GetAllMetricHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	metrics := h.storage.GetAll()
-	metricsBytes, _ := json.Marshal(metrics)
-
-	w.WriteHeader(http.StatusOK)
-	_, err := w.Write(metricsBytes)
+	metricsBytes, err := json.Marshal(metrics)
 
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		applicationerrors.WriteHTTPError(&w, http.StatusInternalServerError)
+
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_, err = w.Write(metricsBytes)
+
+	if err != nil {
+		applicationerrors.WriteHTTPError(&w, http.StatusInternalServerError)
 
 		return
 	}
