@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"errors"
 	"fmt"
+	"github.com/dmitriy/alerting/internal/server/applicationerrors"
 	"github.com/dmitriy/alerting/internal/server/mocks"
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -75,6 +75,7 @@ func TestUpdateMetricHandler_Handle(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			router := chi.NewRouter()
 			ctrl := gomock.NewController(t)
 			mockStorage := mocks.NewMockMetricStorage(ctrl)
 			defer ctrl.Finish()
@@ -82,22 +83,28 @@ func TestUpdateMetricHandler_Handle(t *testing.T) {
 				storage: mockStorage,
 			}
 
+			router.Post("/update/{type}/{name}/{value}", handler.Handle)
+
 			if tt.want.statusCode == 200 {
 				mockStorage.EXPECT().UpdateMetric(tt.args.name, tt.args.value, tt.args._type).Times(1).Return(nil)
 			} else if tt.want.statusCode == 501 {
-				mockStorage.EXPECT().UpdateMetric(tt.args.name, tt.args.value, tt.args._type).Times(1).Return(errors.New("invalid type"))
+				mockStorage.EXPECT().UpdateMetric(tt.args.name, tt.args.value, tt.args._type).Times(1).Return(applicationerrors.ErrInvalidType)
 			} else if tt.want.statusCode == 400 {
-				mockStorage.EXPECT().UpdateMetric(tt.args.name, tt.args.value, tt.args._type).Times(1).Return(errors.New("invalid value"))
+				mockStorage.EXPECT().UpdateMetric(tt.args.name, tt.args.value, tt.args._type).Times(1).Return(applicationerrors.ErrInvalidValue)
 			}
 
-			r := gin.Default()
-			r.POST("/update/:type/:name/:value", handler.Handle)
-			w := httptest.NewRecorder()
 			url := fmt.Sprintf("http://localhost:8080/update/%s/%s/%s", tt.args._type, tt.args.name, fmt.Sprint(tt.args.value))
-			request := httptest.NewRequest(http.MethodPost, url, nil)
-			r.ServeHTTP(w, request)
+			newRequest, err := http.NewRequest(http.MethodPost, url, nil)
+			rr := httptest.NewRecorder()
 
-			assert.Equal(t, tt.want.statusCode, w.Code)
+			if err != nil {
+				return
+			}
+
+			router.ServeHTTP(rr, newRequest)
+			res := rr.Result()
+
+			assert.Equal(t, tt.want.statusCode, res.StatusCode)
 		})
 	}
 }

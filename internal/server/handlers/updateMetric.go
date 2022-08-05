@@ -4,7 +4,7 @@ import (
 	"errors"
 	"github.com/dmitriy/alerting/internal/server/applicationerrors"
 	"github.com/dmitriy/alerting/internal/server/storage"
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 )
 
@@ -18,13 +18,13 @@ func NewUpdateMetricHandler(store storage.MetricStorage) *UpdateMetricHandler {
 	}
 }
 
-func (handler *UpdateMetricHandler) Handle(c *gin.Context) {
-	metricType := c.Param("type")
-	name := c.Param("name")
-	value := c.Param("value")
+func (handler *UpdateMetricHandler) Handle(w http.ResponseWriter, r *http.Request) {
+	metricType := chi.URLParam(r, "type")
+	name := chi.URLParam(r, "name")
+	value := chi.URLParam(r, "value")
 
 	if name == "" {
-		c.AbortWithStatus(http.StatusNotFound)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 
 		return
 	}
@@ -32,11 +32,11 @@ func (handler *UpdateMetricHandler) Handle(c *gin.Context) {
 	err := handler.storage.UpdateMetric(name, value, metricType)
 
 	if err != nil && errors.Is(err, applicationerrors.ErrInvalidType) {
-		c.AbortWithStatus(http.StatusNotImplemented)
+		http.Error(w, http.StatusText(http.StatusNotImplemented), http.StatusNotImplemented)
 
 		return
 	} else if err != nil && errors.Is(err, applicationerrors.ErrInvalidValue) {
-		c.AbortWithStatus(http.StatusBadRequest)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 
 		return
 	}

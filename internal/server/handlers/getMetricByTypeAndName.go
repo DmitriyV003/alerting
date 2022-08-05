@@ -1,10 +1,11 @@
 package handlers
 
 import (
+	"encoding/json"
 	"errors"
 	"github.com/dmitriy/alerting/internal/server/applicationerrors"
 	"github.com/dmitriy/alerting/internal/server/storage"
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 )
 
@@ -18,20 +19,26 @@ func NewGetMetricByTypeAndNameHandler(store storage.MetricStorage) *GetMetricByT
 	}
 }
 
-func (h *GetMetricByTypeAndNameHandler) Handle(c *gin.Context) {
-	name := c.Param("name")
-	metricType := c.Param("type")
+func (h *GetMetricByTypeAndNameHandler) Handle(w http.ResponseWriter, r *http.Request) {
+	name := chi.URLParam(r, "name")
+	metricType := chi.URLParam(r, "type")
 	metric, err := h.storage.GetByNameAndType(name, metricType)
 
+	metricBytes, _ := json.Marshal(metric)
+
 	if err != nil && errors.Is(err, applicationerrors.ErrNotFound) {
-		c.AbortWithStatus(http.StatusNotFound)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 
 		return
 	} else if err != nil && errors.Is(err, applicationerrors.ErrUnknownType) {
-		c.AbortWithStatus(http.StatusBadRequest)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 
 		return
 	}
 
-	c.JSON(http.StatusOK, metric)
+	w.WriteHeader(http.StatusOK)
+	_, err = w.Write(metricBytes)
+	if err != nil {
+		return
+	}
 }

@@ -1,8 +1,8 @@
 package handlers
 
 import (
+	"encoding/json"
 	"github.com/dmitriy/alerting/internal/server/storage"
-	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
@@ -16,7 +16,16 @@ func NewGetAllMetricHandler(store storage.MetricStorage) *GetAllMetricHandler {
 	}
 }
 
-func (h *GetAllMetricHandler) Handle(c *gin.Context) {
+func (h *GetAllMetricHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	metrics := h.storage.GetAll()
-	c.JSON(http.StatusOK, *metrics)
+	metricsBytes, _ := json.Marshal(metrics)
+
+	w.WriteHeader(http.StatusOK)
+	_, err := w.Write(metricsBytes)
+
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+
+		return
+	}
 }
