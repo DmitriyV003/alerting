@@ -5,6 +5,7 @@ import (
 	"github.com/dmitriy/alerting/internal/server/applicationerrors"
 	"github.com/dmitriy/alerting/internal/server/model"
 	"github.com/dmitriy/alerting/internal/server/storage"
+	log "github.com/sirupsen/logrus"
 	"strconv"
 	"sync"
 )
@@ -21,25 +22,8 @@ func New() *metricStorage {
 	}
 }
 
-func NewGauge(name string) model.Gauge {
-	return model.Gauge{
-		Metric: model.Metric{
-			Name: name,
-		},
-		Value: 0,
-	}
-}
-func NewCounter(name string) model.Counter {
-	return model.Counter{
-		Metric: model.Metric{
-			Name: name,
-		},
-		Value: 0,
-	}
-}
-
 func (s *metricStorage) GetByNameAndType(name string, metricType string) (interface{}, error) {
-	if metricType == "gauge" {
+	if metricType == model.GaugeType {
 		metric, ok := s.gauges.Load(name)
 
 		if !ok {
@@ -49,7 +33,7 @@ func (s *metricStorage) GetByNameAndType(name string, metricType string) (interf
 		gauge := metric.(model.Gauge)
 
 		return gauge.Value, nil
-	} else if metricType == "counter" {
+	} else if metricType == model.CounterType {
 		metric, ok := s.counters.Load(name)
 
 		if !ok {
@@ -94,11 +78,10 @@ func (s *metricStorage) GetAll() *[]storage.MetricData {
 }
 
 func (s *metricStorage) UpdateMetric(metric string, value string, metricType string) error {
-	if metricType == "gauge" {
-		foundedMetric := NewGauge(metric)
+	if metricType == model.GaugeType {
+		foundedMetric := model.NewGauge(metric)
 		val, err := strconv.ParseFloat(value, 64)
 
-		fmt.Println(val, err)
 		if err != nil {
 			return applicationerrors.ErrInvalidValue
 		}
@@ -106,17 +89,19 @@ func (s *metricStorage) UpdateMetric(metric string, value string, metricType str
 		foundedMetric.Value = val
 		foundedMetric.Name = metric
 		s.gauges.Store(metric, foundedMetric)
-	} else if metricType == "counter" {
+	} else if metricType == model.CounterType {
 		foundedMetric, ok := s.counters.Load(metric)
 
 		val, err := strconv.ParseInt(value, 10, 64)
 
 		if err != nil {
+			log.Info("Invalid metric Value")
+
 			return applicationerrors.ErrInvalidValue
 		}
 
 		if !ok {
-			newCounter := NewCounter(metric)
+			newCounter := model.NewCounter(metric)
 			newCounter.Value = val
 			newCounter.Name = metric
 			s.counters.Store(metric, newCounter)
@@ -126,6 +111,8 @@ func (s *metricStorage) UpdateMetric(metric string, value string, metricType str
 			s.counters.Store(metric, foundedMetric)
 		}
 	} else {
+		log.Info("Invalid metric Type")
+
 		return applicationerrors.ErrInvalidType
 	}
 

@@ -31,12 +31,12 @@ func NewCounter(name string, value int64) Counter {
 
 func NewHealth() *Health {
 	return &Health{
-		Gauges:   sync.Map{},
-		Counters: sync.Map{},
+		Gauges:   &sync.Map{},
+		Counters: &sync.Map{},
 	}
 }
 
 type Health struct {
-	Gauges   sync.Map
-	Counters sync.Map
+	Gauges   *sync.Map
+	Counters *sync.Map
 }

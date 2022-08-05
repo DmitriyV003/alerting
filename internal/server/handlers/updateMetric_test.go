@@ -104,6 +104,8 @@ func TestUpdateMetricHandler_Handle(t *testing.T) {
 			router.ServeHTTP(rr, newRequest)
 			res := rr.Result()
 
+			defer res.Body.Close()
+
 			assert.Equal(t, tt.want.statusCode, res.StatusCode)
 		})
 	}

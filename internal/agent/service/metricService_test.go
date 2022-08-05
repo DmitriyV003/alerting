@@ -9,7 +9,7 @@ import (
 
 func TestMetricService_gatherMetrics(t *testing.T) {
 	type fields struct {
-		Health models.Health
+		Health *models.Health
 	}
 	tests := []struct {
 		name   string
@@ -17,16 +17,16 @@ func TestMetricService_gatherMetrics(t *testing.T) {
 	}{
 		{
 			name: "Gather metric test",
-			fields: struct{ Health models.Health }{Health: models.Health{
-				Gauges:   sync.Map{},
-				Counters: sync.Map{},
+			fields: struct{ Health *models.Health }{Health: &models.Health{
+				Gauges:   &sync.Map{},
+				Counters: &sync.Map{},
 			}},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			metricService := &MetricService{
-				Health: tt.fields.Health,
+				Health: *tt.fields.Health,
 			}
 			metricService.gatherMetrics()
 
@@ -52,9 +52,9 @@ func TestNew(t *testing.T) {
 		{
 			name: "Create Metric Service Test",
 			want: &MetricService{Health: struct {
-				Gauges   sync.Map
-				Counters sync.Map
-			}{Gauges: sync.Map{}, Counters: sync.Map{}}},
+				Gauges   *sync.Map
+				Counters *sync.Map
+			}{Gauges: &sync.Map{}, Counters: &sync.Map{}}},
 		},
 	}
 	for _, tt := range tests {
