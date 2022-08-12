@@ -1,7 +1,6 @@
 package memory
 
 import (
-	"fmt"
 	"github.com/dmitriy/alerting/internal/server/applicationerrors"
 	"github.com/dmitriy/alerting/internal/server/model"
 	"github.com/dmitriy/alerting/internal/server/storage"
@@ -11,38 +10,27 @@ import (
 )
 
 type metricStorage struct {
-	counters sync.Map
-	gauges   sync.Map
+	metrics *sync.Map
 }
 
 func New() *metricStorage {
 	return &metricStorage{
-		counters: sync.Map{},
-		gauges:   sync.Map{},
+		metrics: &sync.Map{},
 	}
 }
 
 func (s *metricStorage) GetByNameAndType(name string, metricType string) (interface{}, error) {
+	metric, ok := s.metrics.Load(name)
+
+	if !ok {
+		return nil, applicationerrors.ErrNotFound
+	}
+	castedMetric := metric.(model.Metric)
+
 	if metricType == model.GaugeType {
-		metric, ok := s.gauges.Load(name)
-
-		if !ok {
-			return nil, applicationerrors.ErrNotFound
-		}
-
-		gauge := metric.(model.Gauge)
-
-		return gauge.Value, nil
+		return castedMetric.FloatValue, nil
 	} else if metricType == model.CounterType {
-		metric, ok := s.counters.Load(name)
-
-		if !ok {
-			return nil, applicationerrors.ErrNotFound
-		}
-
-		counter := metric.(model.Counter)
-
-		return counter.Value, nil
+		return castedMetric.IntValue, nil
 	}
 
 	return nil, applicationerrors.ErrUnknownType
@@ -51,22 +39,19 @@ func (s *metricStorage) GetByNameAndType(name string, metricType string) (interf
 func (s *metricStorage) GetAll() *[]storage.MetricData {
 	var metrics []storage.MetricData
 
-	s.gauges.Range(func(key, value interface{}) bool {
-		metric := value.(model.Gauge)
-		metricData := storage.MetricData{
-			Name:  key.(string),
-			Value: fmt.Sprint(metric.Value),
+	s.metrics.Range(func(key, value interface{}) bool {
+		metric := value.(model.Metric)
+		var val interface{}
+
+		if metric.Type == model.GaugeType {
+			val = *metric.FloatValue
+		} else if metric.Type == model.CounterType {
+			val = *metric.IntValue
 		}
-		metrics = append(metrics, metricData)
 
-		return true
-	})
-
-	s.counters.Range(func(key, value interface{}) bool {
-		metric := value.(model.Counter)
 		metricData := storage.MetricData{
 			Name:  key.(string),
-			Value: fmt.Sprint(metric.Value),
+			Value: val,
 		}
 		metrics = append(metrics, metricData)
 
@@ -74,24 +59,22 @@ func (s *metricStorage) GetAll() *[]storage.MetricData {
 	})
 
 	return &metrics
-
 }
 
-func (s *metricStorage) UpdateMetric(metric string, value string, metricType string) error {
+func (s *metricStorage) UpdateMetric(name string, value string, metricType string) error {
+	var metric interface{}
+
 	if metricType == model.GaugeType {
-		foundedMetric := model.NewGauge(metric)
 		val, err := strconv.ParseFloat(value, 64)
 
 		if err != nil {
 			return applicationerrors.ErrInvalidValue
 		}
 
-		foundedMetric.Value = val
-		foundedMetric.Name = metric
-		s.gauges.Store(metric, foundedMetric)
+		metric = model.NewGauge(name, val)
 	} else if metricType == model.CounterType {
-		foundedMetric, ok := s.counters.Load(metric)
-
+		var ok bool
+		metric, ok = s.metrics.Load(name)
 		val, err := strconv.ParseInt(value, 10, 64)
 
 		if err != nil {
@@ -101,20 +84,17 @@ func (s *metricStorage) UpdateMetric(metric string, value string, metricType str
 		}
 
 		if !ok {
-			newCounter := model.NewCounter(metric)
-			newCounter.Value = val
-			newCounter.Name = metric
-			s.counters.Store(metric, newCounter)
+			metric = model.NewCounter(name, val)
 		} else {
-			foundedMetric := foundedMetric.(model.Counter)
-			foundedMetric.Value += val
-			s.counters.Store(metric, foundedMetric)
+			*metric.(model.Metric).IntValue += val
 		}
 	} else {
 		log.Info("Invalid metric Type")
 
 		return applicationerrors.ErrInvalidType
 	}
+
+	s.metrics.Store(name, metric)
 
 	return nil
 }
