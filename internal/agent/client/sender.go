@@ -33,7 +33,7 @@ func (sender *Sender) SendWithInterval(url string, metrics *models.Health, secon
 			if err != nil {
 				log.WithFields(log.Fields{
 					"url": buildURL,
-				}).Info("Error to send data")
+				}).Error("Error to send data", err)
 
 				return false
 			}
@@ -53,7 +53,7 @@ func (sender *Sender) SendWithInterval(url string, metrics *models.Health, secon
 			if err != nil {
 				log.WithFields(log.Fields{
 					"url": buildURL,
-				}).Info("Error to send data")
+				}).Error("Error to send data", err)
 
 				return false
 			}
@@ -73,7 +73,7 @@ func (sender *Sender) sendRequest(url string) error {
 	res, err := sender.client.Do(request)
 
 	if err != nil {
-		log.WithFields(log.Fields{}).Error(fmt.Printf("Request failed with status: %d \n", res.StatusCode))
+		log.Error("Request fail", err)
 
 		return err
 	}
