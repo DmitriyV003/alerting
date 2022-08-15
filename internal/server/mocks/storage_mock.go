@@ -2,7 +2,6 @@ package mocks
 
 import (
 	model "github.com/dmitriy/alerting/internal/server/model"
-	"github.com/dmitriy/alerting/internal/server/storage"
 	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
 )
@@ -43,9 +42,9 @@ func (_mr *MockMetricStorageMockRecorder) UpdateMetric(arg0, arg1, arg2 interfac
 }
 
 // GetAll mocks base method
-func (_m *MockMetricStorage) GetAll() *[]storage.MetricData {
+func (_m *MockMetricStorage) GetAll() *[]model.Metric {
 	ret := _m.ctrl.Call(_m, "GetAll")
-	ret0, _ := ret[0].(*[]storage.MetricData)
+	ret0, _ := ret[0].(*[]model.Metric)
 	return ret0
 }
 
@@ -65,4 +64,24 @@ func (_m *MockMetricStorage) GetByNameAndType(name string, metricType string) (*
 // GetByNameAndType indicates an expected call of GetByNameAndType
 func (_mr *MockMetricStorageMockRecorder) GetByNameAndType(arg0, arg1 interface{}) *gomock.Call {
 	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "GetByNameAndType", reflect.TypeOf((*MockMetricStorage)(nil).GetByNameAndType), arg0, arg1)
+}
+
+// SaveAllMetricsData mocks base method
+func (_m *MockMetricStorage) SaveAllMetricsData(metrics *[]model.Metric) {
+	_m.ctrl.Call(_m, "SaveAllMetricsData", metrics)
+}
+
+// SaveAllMetricsData indicates an expected call of SaveAllMetricsData
+func (_mr *MockMetricStorageMockRecorder) SaveAllMetricsData(arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "SaveAllMetricsData", reflect.TypeOf((*MockMetricStorage)(nil).SaveAllMetricsData), arg0)
+}
+
+// AddOnUpdateListener mocks base method
+func (_m *MockMetricStorage) AddOnUpdateListener(fn func()) {
+	_m.ctrl.Call(_m, "AddOnUpdateListener", fn)
+}
+
+// AddOnUpdateListener indicates an expected call of AddOnUpdateListener
+func (_mr *MockMetricStorageMockRecorder) AddOnUpdateListener(arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCallWithMethodType(_mr.mock, "AddOnUpdateListener", reflect.TypeOf((*MockMetricStorage)(nil).AddOnUpdateListener), arg0)
 }

@@ -59,8 +59,8 @@ func (metricService *MetricService) gatherMetrics() {
 	metricService.Health.Metrics.Store("RandomValue", models.NewGauge("RandomValue", rand.Float64()))
 }
 
-func (metricService *MetricService) GatherMetricsByInterval(seconds int) {
-	ticker := time.NewTicker(time.Duration(seconds) * time.Second)
+func (metricService *MetricService) GatherMetricsByInterval(duration time.Duration) {
+	ticker := time.NewTicker(duration)
 	defer ticker.Stop()
 
 	for range ticker.C {
