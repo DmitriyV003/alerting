@@ -28,8 +28,8 @@ func NewCounter(name string, val int64) Metric {
 }
 
 type Metric struct {
-	Name       string
-	Type       MetricType
-	IntValue   *int64
-	FloatValue *float64
+	Name       string     `json:"id"`
+	Type       MetricType `json:"type"`
+	IntValue   *int64     `json:"delta,omitempty"`
+	FloatValue *float64   `json:"value,omitempty"`
 }
