@@ -7,13 +7,16 @@ import (
 	"github.com/dmitriy/alerting/internal/agent/models"
 	"github.com/dmitriy/alerting/internal/server/applicationerrors"
 	"github.com/dmitriy/alerting/internal/server/model"
+	"github.com/dmitriy/alerting/internal/server/service"
 	"github.com/dmitriy/alerting/internal/server/storage"
 	"github.com/go-chi/chi/v5"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 )
 
 type UpdateMetricHandler struct {
-	storage storage.MetricStorage
+	storage   storage.MetricStorage
+	fileSaver *service.FileSaver
 }
 
 func NewUpdateMetricHandler(store storage.MetricStorage) *UpdateMetricHandler {
@@ -62,4 +65,10 @@ func (handler *UpdateMetricHandler) Handle(w http.ResponseWriter, r *http.Reques
 
 		return
 	}
+
+	log.WithFields(log.Fields{
+		"Name":  name,
+		"Type":  metricType,
+		"Value": value,
+	}).Info("Updated metric")
 }

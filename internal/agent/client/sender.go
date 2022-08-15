@@ -3,7 +3,6 @@ package client
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"github.com/dmitriy/alerting/internal/agent/models"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -23,8 +22,8 @@ func New() Sender {
 	return sender
 }
 
-func (sender *Sender) SendWithInterval(url string, metrics *models.Health, seconds int) {
-	ticker := time.NewTicker(time.Duration(seconds) * time.Second)
+func (sender *Sender) SendWithInterval(url string, metrics *models.Health, duration time.Duration) {
+	ticker := time.NewTicker(duration)
 
 	for range ticker.C {
 		metrics.Metrics.Range(func(key, value interface{}) bool {
@@ -49,14 +48,18 @@ func (sender *Sender) SendWithInterval(url string, metrics *models.Health, secon
 
 			if err != nil {
 				log.WithFields(log.Fields{
-					"url": fmt.Sprintf("%s; Name: %s, Value: %s", url, metric.Name, fmt.Sprint(metricValue)),
-				}).Error("Error to send data", err)
+					"Name":  metric.Name,
+					"Type":  metric.Type,
+					"Value": metricValue,
+				}).Error("Error to send data")
 
 				return false
 			}
 
 			log.WithFields(log.Fields{
-				"url": fmt.Sprintf("%s; Name: %s, Value: %s", url, metric.Name, fmt.Sprint(metricValue)),
+				"Name":  metric.Name,
+				"Type":  metric.Type,
+				"Value": metricValue,
 			}).Info("Send metric data")
 
 			return true
