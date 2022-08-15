@@ -3,20 +3,43 @@ package memory
 import (
 	"github.com/dmitriy/alerting/internal/server/applicationerrors"
 	"github.com/dmitriy/alerting/internal/server/model"
-	"github.com/dmitriy/alerting/internal/server/storage"
 	log "github.com/sirupsen/logrus"
 	"strconv"
 	"sync"
 )
 
 type metricStorage struct {
-	metrics *sync.Map
+	metrics  *sync.Map
+	events   map[string][]chan func()
+	onUpdate []func()
 }
 
 func New() *metricStorage {
-	return &metricStorage{
+	metricStore := metricStorage{
 		metrics: &sync.Map{},
+		events: map[string][]chan func(){
+			"OnUpdate": {
+				make(chan func()),
+			},
+		},
+		onUpdate: []func(){},
 	}
+	go func() {
+		chs := metricStore.events["OnUpdate"]
+		for _, ch := range chs {
+			for {
+				handler := <-ch
+				handler()
+				log.Info("Event: OnUpdate")
+			}
+		}
+	}()
+
+	return &metricStore
+}
+
+func (s *metricStorage) AddOnUpdateListener(fn func()) {
+	s.onUpdate = append(s.onUpdate, fn)
 }
 
 func (s *metricStorage) GetByNameAndType(name string, metricType string) (*model.Metric, error) {
@@ -36,24 +59,13 @@ func (s *metricStorage) GetByNameAndType(name string, metricType string) (*model
 	return nil, applicationerrors.ErrUnknownType
 }
 
-func (s *metricStorage) GetAll() *[]storage.MetricData {
-	var metrics []storage.MetricData
+func (s *metricStorage) GetAll() *[]model.Metric {
+	var metrics []model.Metric
 
 	s.metrics.Range(func(key, value interface{}) bool {
 		metric := value.(model.Metric)
-		var val interface{}
 
-		if metric.Type == model.GaugeType {
-			val = *metric.FloatValue
-		} else if metric.Type == model.CounterType {
-			val = *metric.IntValue
-		}
-
-		metricData := storage.MetricData{
-			Name:  key.(string),
-			Value: val,
-		}
-		metrics = append(metrics, metricData)
+		metrics = append(metrics, metric)
 
 		return true
 	})
@@ -95,6 +107,25 @@ func (s *metricStorage) UpdateMetric(name string, value string, metricType strin
 	}
 
 	s.metrics.Store(name, metric)
+	s.emit("OnUpdate")
 
 	return nil
+}
+
+func (s *metricStorage) SaveAllMetricsData(metrics *[]model.Metric) {
+	for _, metric := range *metrics {
+		s.metrics.Store(metric.Name, metric)
+	}
+}
+
+func (s *metricStorage) emit(event string) {
+	if _, ok := s.events[event]; ok {
+		for _, handler := range s.events[event] {
+			go func(handler chan func()) {
+				for _, h := range s.onUpdate {
+					handler <- h
+				}
+			}(handler)
+		}
+	}
 }
