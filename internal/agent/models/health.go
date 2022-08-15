@@ -2,41 +2,40 @@ package models
 
 import "sync"
 
-type Metric struct {
-	Name string
-}
+const CounterType = "counter"
+const GaugeType = "gauge"
 
-type Gauge struct {
-	Metric
-	Value float64
-}
-type Counter struct {
-	Metric
-	Value int64
-}
+type MetricType string
 
-func NewGauge(name string, value float64) Gauge {
-	return Gauge{
-		Metric: Metric{Name: name},
-		Value:  value,
+func NewGauge(name string, value float64) Metric {
+	return Metric{
+		Name:       name,
+		Type:       GaugeType,
+		FloatValue: &value,
 	}
 }
 
-func NewCounter(name string, value int64) Counter {
-	return Counter{
-		Metric: Metric{Name: name},
-		Value:  value,
+func NewCounter(name string, value int64) Metric {
+	return Metric{
+		Name:     name,
+		Type:     CounterType,
+		IntValue: &value,
 	}
 }
 
 func NewHealth() *Health {
 	return &Health{
-		Gauges:   &sync.Map{},
-		Counters: &sync.Map{},
+		Metrics: &sync.Map{},
 	}
 }
 
 type Health struct {
-	Gauges   *sync.Map
-	Counters *sync.Map
+	Metrics *sync.Map
+}
+
+type Metric struct {
+	Name       string     `json:"id"`
+	Type       MetricType `json:"type"`
+	IntValue   *int64     `json:"delta,omitempty"`
+	FloatValue *float64   `json:"value,omitempty"`
 }

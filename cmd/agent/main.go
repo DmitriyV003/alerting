@@ -22,7 +22,7 @@ func main() {
 	go metricService.GatherMetricsByInterval(2)
 
 	sender := client.New()
-	go sender.SendWithInterval("http://localhost:8080", &metricService.Health, 10)
+	go sender.SendWithInterval("http://localhost:8080/update", &metricService.Health, 10)
 
 	select {}
 }

@@ -19,7 +19,7 @@ func New() *metricStorage {
 	}
 }
 
-func (s *metricStorage) GetByNameAndType(name string, metricType string) (interface{}, error) {
+func (s *metricStorage) GetByNameAndType(name string, metricType string) (*model.Metric, error) {
 	metric, ok := s.metrics.Load(name)
 
 	if !ok {
@@ -28,9 +28,9 @@ func (s *metricStorage) GetByNameAndType(name string, metricType string) (interf
 	castedMetric := metric.(model.Metric)
 
 	if metricType == model.GaugeType {
-		return castedMetric.FloatValue, nil
+		return &castedMetric, nil
 	} else if metricType == model.CounterType {
-		return castedMetric.IntValue, nil
+		return &castedMetric, nil
 	}
 
 	return nil, applicationerrors.ErrUnknownType
