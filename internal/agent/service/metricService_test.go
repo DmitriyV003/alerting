@@ -18,8 +18,7 @@ func TestMetricService_gatherMetrics(t *testing.T) {
 		{
 			name: "Gather metric test",
 			fields: struct{ Health *models.Health }{Health: &models.Health{
-				Gauges:   &sync.Map{},
-				Counters: &sync.Map{},
+				Metrics: &sync.Map{},
 			}},
 		},
 	}
@@ -30,14 +29,14 @@ func TestMetricService_gatherMetrics(t *testing.T) {
 			}
 			metricService.gatherMetrics()
 
-			metric, isOk := metricService.Health.Gauges.Load("Alloc")
-			metricCasted := metric.(models.Gauge)
+			metric, isOk := metricService.Health.Metrics.Load("Alloc")
+			metricCasted := metric.(models.Metric)
 
 			assert.Equal(t, metricCasted.Name, "Alloc")
 			assert.True(t, isOk)
 
-			counterMetric, _ := metricService.Health.Counters.Load("PollCount")
-			counterMetricCasted := counterMetric.(models.Counter)
+			counterMetric, _ := metricService.Health.Metrics.Load("PollCount")
+			counterMetricCasted := counterMetric.(models.Metric)
 
 			assert.Equal(t, counterMetricCasted.Name, "PollCount")
 		})
@@ -52,9 +51,8 @@ func TestNew(t *testing.T) {
 		{
 			name: "Create Metric Service Test",
 			want: &MetricService{Health: struct {
-				Gauges   *sync.Map
-				Counters *sync.Map
-			}{Gauges: &sync.Map{}, Counters: &sync.Map{}}},
+				Metrics *sync.Map
+			}{Metrics: &sync.Map{}}},
 		},
 	}
 	for _, tt := range tests {

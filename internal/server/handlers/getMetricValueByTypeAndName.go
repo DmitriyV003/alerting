@@ -3,36 +3,28 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/dmitriy/alerting/internal/agent/models"
 	"github.com/dmitriy/alerting/internal/server/applicationerrors"
-	"github.com/dmitriy/alerting/internal/server/model"
 	"github.com/dmitriy/alerting/internal/server/storage"
+	"github.com/go-chi/chi/v5"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 )
 
-type GetMetricByTypeAndNameHandler struct {
+type GetMetricValueByTypeAndNameHandler struct {
 	storage storage.MetricStorage
 }
 
-func NewGetMetricByTypeAndNameHandler(store storage.MetricStorage) *GetMetricByTypeAndNameHandler {
-	return &GetMetricByTypeAndNameHandler{
+func NewGetMetricValueByTypeAndNameHandler(store storage.MetricStorage) *GetMetricValueByTypeAndNameHandler {
+	return &GetMetricValueByTypeAndNameHandler{
 		storage: store,
 	}
 }
 
-func (h *GetMetricByTypeAndNameHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	var name string
-	var metricReq model.Metric
-
-	if err := json.NewDecoder(r.Body).Decode(&metricReq); err != nil {
-		applicationerrors.WriteHTTPError(&w, http.StatusBadRequest)
-
-		return
-	}
-
-	name = metricReq.Name
-
-	metric, err := h.storage.GetByNameAndType(name, string(metricReq.Type))
+func (h *GetMetricValueByTypeAndNameHandler) Handle(w http.ResponseWriter, r *http.Request) {
+	name := chi.URLParam(r, "name")
+	metricType := chi.URLParam(r, "type")
+	metric, err := h.storage.GetByNameAndType(name, metricType)
 
 	if name == "" {
 		log.Info(fmt.Printf("Metric Not Found "))
@@ -47,7 +39,13 @@ func (h *GetMetricByTypeAndNameHandler) Handle(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	metricBytes, err := json.Marshal(metric)
+	var metricBytes []byte
+
+	if metric.Type == models.GaugeType {
+		metricBytes, err = json.Marshal(metric.FloatValue)
+	} else if metric.Type == models.CounterType {
+		metricBytes, err = json.Marshal(metric.IntValue)
+	}
 
 	if err != nil {
 		log.Info("Unknown error")
@@ -56,7 +54,6 @@ func (h *GetMetricByTypeAndNameHandler) Handle(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(metricBytes)
 	if err != nil {

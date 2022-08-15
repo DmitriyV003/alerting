@@ -1,6 +1,8 @@
 package client
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/dmitriy/alerting/internal/agent/models"
 	log "github.com/sirupsen/logrus"
@@ -25,41 +27,36 @@ func (sender *Sender) SendWithInterval(url string, metrics *models.Health, secon
 	ticker := time.NewTicker(time.Duration(seconds) * time.Second)
 
 	for range ticker.C {
-		metrics.Counters.Range(func(key, value interface{}) bool {
-			metric, _ := value.(models.Counter)
-			buildURL := url + fmt.Sprintf("/update/counter/%s/%d", metric.Name, metric.Value)
-			err := sender.sendRequest(buildURL)
+		metrics.Metrics.Range(func(key, value interface{}) bool {
+			metric, _ := value.(models.Metric)
+			var metricValue interface{}
+
+			if metric.Type == models.GaugeType {
+				metricValue = *metric.FloatValue
+			} else if metric.Type == models.CounterType {
+				metricValue = *metric.IntValue
+			}
+
+			data, err := json.Marshal(metric)
+
+			if err != nil {
+				log.Error("Unknown error during json.Marshal")
+
+				return false
+			}
+
+			err = sender.sendRequest(url, data)
 
 			if err != nil {
 				log.WithFields(log.Fields{
-					"url": buildURL,
+					"url": fmt.Sprintf("%s; Name: %s, Value: %s", url, metric.Name, fmt.Sprint(metricValue)),
 				}).Error("Error to send data", err)
 
 				return false
 			}
 
 			log.WithFields(log.Fields{
-				"url": buildURL,
-			}).Info("Send metric data")
-
-			return true
-		})
-
-		metrics.Gauges.Range(func(key, value interface{}) bool {
-			metric, _ := value.(models.Gauge)
-			buildURL := url + fmt.Sprintf("/update/gauge/%s/%f", metric.Name, metric.Value)
-			err := sender.sendRequest(buildURL)
-
-			if err != nil {
-				log.WithFields(log.Fields{
-					"url": buildURL,
-				}).Error("Error to send data", err)
-
-				return false
-			}
-
-			log.WithFields(log.Fields{
-				"url": buildURL,
+				"url": fmt.Sprintf("%s; Name: %s, Value: %s", url, metric.Name, fmt.Sprint(metricValue)),
 			}).Info("Send metric data")
 
 			return true
@@ -67,9 +64,9 @@ func (sender *Sender) SendWithInterval(url string, metrics *models.Health, secon
 	}
 }
 
-func (sender *Sender) sendRequest(url string) error {
-	request, _ := http.NewRequest(http.MethodPost, url, nil)
-	request.Header.Set("Content-Type", "text/plain")
+func (sender *Sender) sendRequest(url string, data []byte) error {
+	request, _ := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
+	request.Header.Add("Content-Type", "application/json")
 	res, err := sender.client.Do(request)
 
 	if err != nil {
@@ -77,6 +74,10 @@ func (sender *Sender) sendRequest(url string) error {
 
 		return err
 	}
+
+	log.WithFields(log.Fields{
+		"StatusCode": res.StatusCode,
+	}).Info("Request ended")
 
 	defer res.Body.Close()
 

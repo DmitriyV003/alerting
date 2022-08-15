@@ -10,10 +10,11 @@ func TestNewGauge(t *testing.T) {
 		name  string
 		value float64
 	}
+	val := 12.23
 	tests := []struct {
 		name string
 		args args
-		want Gauge
+		want Metric
 	}{
 		{
 			name: "Test create Gauge",
@@ -21,10 +22,12 @@ func TestNewGauge(t *testing.T) {
 				name  string
 				value float64
 			}{name: "TestGauge", value: 12.23},
-			want: struct {
-				Metric
-				Value float64
-			}{Metric: Metric{Name: "TestGauge"}, Value: 12.23},
+			want: Metric{
+				Name:       "TestGauge",
+				Type:       GaugeType,
+				IntValue:   nil,
+				FloatValue: &val,
+			},
 		},
 	}
 	for _, tt := range tests {
