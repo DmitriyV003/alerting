@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/caarlos0/env/v6"
 	"github.com/dmitriy/alerting/internal/server/handlers"
 	"github.com/dmitriy/alerting/internal/server/storage/memory"
 	"github.com/go-chi/chi/v5"
@@ -9,7 +10,17 @@ import (
 	"net/http"
 )
 
+type config struct {
+	Address string `env:"ADDRESS" envDefault:"localhost:8080"`
+}
+
 func main() {
+	var conf config
+	err := env.Parse(&conf)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	router := chi.NewRouter()
 
 	router.Use(middleware.RequestID)
@@ -30,7 +41,7 @@ func main() {
 	router.Post("/value", getMetricByTypeAndNameHandler.Handle)
 	router.Post("/update", updateMetricHandler.Handle)
 
-	log.Info("server is starting at http://localhost:8080")
+	log.Infof("server is starting at %s", conf.Address)
 
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServe(conf.Address, router))
 }
