@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/caarlos0/env/v6"
+	"github.com/dmitriy/alerting/cmd/server/config"
 	"github.com/dmitriy/alerting/internal/server/handlers"
 	"github.com/dmitriy/alerting/internal/server/service"
 	"github.com/dmitriy/alerting/internal/server/storage/memory"
@@ -9,26 +9,16 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	log "github.com/sirupsen/logrus"
 	"net/http"
-	"time"
+	"strconv"
 )
 
-type config struct {
-	Address       string        `env:"ADDRESS" envDefault:"localhost:8080"`
-	StoreInterval time.Duration `env:"STORE_INTERVAL" envDefault:"300s"`
-	StoreFile     string        `env:"STORE_FILE" envDefault:"/tmp/devops-metrics-db.json"`
-	Restore       bool          `env:"RESTORE" envDefault:"true"`
+var conf config.Config
+
+func init() {
+	config.ParseEnv(&conf)
 }
 
 func main() {
-	var conf config
-	err := env.Parse(&conf)
-	if err != nil {
-		log.Error("Unable to parse ENV: ", err)
-	}
-	if conf.StoreFile == "" {
-		conf.StoreFile = "/tmp/devops-metrics-db.json"
-	}
-
 	router := chi.NewRouter()
 
 	router.Use(middleware.RequestID)
@@ -43,10 +33,11 @@ func main() {
 	getMetricValueByTypeAndNameHandler := handlers.NewGetMetricValueByTypeAndNameHandler(store)
 	getMetricByTypeAndNameHandler := handlers.NewGetMetricByTypeAndNameHandler(store)
 
-	fileSaver := service.NewFileSaver(conf.StoreFile, conf.StoreInterval, conf.Restore, store)
-	log.Info("ENV VARS: ", conf.StoreFile, conf.StoreInterval, conf.Restore)
+	restore, _ := strconv.ParseBool(conf.Restore)
+	fileSaver := service.NewFileSaver(conf.StoreFile, conf.StoreInterval, restore, store)
 	fileSaver.Restore()
-	if conf.StoreInterval == 0 {
+
+	if conf.StoreInterval.String() == "0s" {
 		store.AddOnUpdateListener(fileSaver.StoreAllData)
 	} else {
 		go fileSaver.StoreAllDataWithInterval()
