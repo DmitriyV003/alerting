@@ -26,6 +26,7 @@ func main() {
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.StripSlashes)
+	router.Use(middleware.Compress(5))
 
 	store := memory.New()
 	updateMetricHandler := handlers.NewUpdateMetricHandler(store)
