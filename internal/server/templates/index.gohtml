@@ -1,0 +1,22 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Metrics</title>
+</head>
+<body>
+    <div>
+        <div style="margin-bottom: 20px">Metrics</div>
+        {{ range .Metrics}}
+            <div style="margin-bottom: 30px; border-bottom: 1px solid; padding-bottom: 6px">
+                <div style="margin-bottom: 10px">Name: {{ .Name }}</div>
+                <div style="margin-bottom: 10px">Type: {{ .Type }}</div>
+                {{ if eq .Type "gauge" }}
+                    <div>Value: {{ .FloatValue }}</div>
+                {{ else if eq .Type "counter" }}
+                    <div>{{ .IntValue }}</div>
+                {{ end }}
+            </div>
+        {{ end }}
+    </div>
+</body>
+</html>
