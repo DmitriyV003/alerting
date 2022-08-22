@@ -1,4 +1,4 @@
-package config
+package main
 
 import (
 	"flag"
@@ -14,23 +14,23 @@ type Config struct {
 	Restore       string        `env:"RESTORE"`
 }
 
-const DefaultAddress = "localhost:8080"
-const DefaultStoreInterval = "300s"
-const DefaultStoreFile = "/tmp/devops-metrics-db.json"
-const DefaultRestore = "true"
+const defaultAddress = "localhost:8080"
+const defaultStoreInterval = "300s"
+const defaultStoreFile = "/tmp/devops-metrics-db.json"
+const defaultRestore = "true"
 
-func ParseEnv(conf *Config) {
+func (conf *Config) parseEnv() {
 	err := env.Parse(conf)
 	if err != nil {
 		log.Error("Unable to parse ENV: ", err)
 	}
 
-	storeIntervalDuration, _ := time.ParseDuration(DefaultStoreInterval)
+	storeIntervalDuration, _ := time.ParseDuration(defaultStoreInterval)
 
-	address := flag.String("a", DefaultAddress, "Server address")
+	address := flag.String("a", defaultAddress, "Server address")
 	storeInterval := flag.Duration("i", storeIntervalDuration, "Store data on disk interval")
-	storeFile := flag.String("f", DefaultStoreFile, "File storage for data")
-	restore := flag.String("r", DefaultRestore, "Restore data from file on restart")
+	storeFile := flag.String("f", defaultStoreFile, "File storage for data")
+	restore := flag.String("r", defaultRestore, "Restore data from file on restart")
 	flag.PrintDefaults()
 	flag.Parse()
 
