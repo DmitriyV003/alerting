@@ -1,4 +1,4 @@
-package config
+package main
 
 import (
 	"flag"
@@ -19,7 +19,7 @@ const DefaultStoreInterval = "300s"
 const DefaultStoreFile = "/tmp/devops-metrics-db.json"
 const DefaultRestore = "true"
 
-func ParseEnv(conf *Config) {
+func (conf *Config) parseEnv() {
 	err := env.Parse(conf)
 	if err != nil {
 		log.Error("Unable to parse ENV: ", err)
