@@ -1,7 +1,8 @@
 package client
 
 import (
-	"fmt"
+	"bytes"
+	"encoding/json"
 	"github.com/dmitriy/alerting/internal/agent/models"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -21,45 +22,44 @@ func New() Sender {
 	return sender
 }
 
-func (sender *Sender) SendWithInterval(url string, metrics *models.Health, seconds int) {
-	ticker := time.NewTicker(time.Duration(seconds) * time.Second)
+func (sender *Sender) SendWithInterval(url string, metrics *models.Health, duration time.Duration) {
+	ticker := time.NewTicker(duration)
 
 	for range ticker.C {
-		metrics.Counters.Range(func(key, value interface{}) bool {
-			metric, _ := value.(models.Counter)
-			buildURL := url + fmt.Sprintf("/update/counter/%s/%d", metric.Name, metric.Value)
-			err := sender.sendRequest(buildURL)
+		metrics.Metrics.Range(func(key, value interface{}) bool {
+			metric, _ := value.(models.Metric)
+			var metricValue interface{}
+
+			if metric.Type == models.GaugeType {
+				metricValue = *metric.FloatValue
+			} else if metric.Type == models.CounterType {
+				metricValue = *metric.IntValue
+			}
+
+			data, err := json.Marshal(metric)
+
+			if err != nil {
+				log.Error("Unknown error during json.Marshal")
+
+				return false
+			}
+
+			err = sender.sendRequest(url, data)
 
 			if err != nil {
 				log.WithFields(log.Fields{
-					"url": buildURL,
-				}).Info("Error to send data")
+					"Name":  metric.Name,
+					"Type":  metric.Type,
+					"Value": metricValue,
+				}).Error("Error to send data")
 
 				return false
 			}
 
 			log.WithFields(log.Fields{
-				"url": buildURL,
-			}).Info("Send metric data")
-
-			return true
-		})
-
-		metrics.Gauges.Range(func(key, value interface{}) bool {
-			metric, _ := value.(models.Gauge)
-			buildURL := url + fmt.Sprintf("/update/gauge/%s/%f", metric.Name, metric.Value)
-			err := sender.sendRequest(buildURL)
-
-			if err != nil {
-				log.WithFields(log.Fields{
-					"url": buildURL,
-				}).Info("Error to send data")
-
-				return false
-			}
-
-			log.WithFields(log.Fields{
-				"url": buildURL,
+				"Name":  metric.Name,
+				"Type":  metric.Type,
+				"Value": metricValue,
 			}).Info("Send metric data")
 
 			return true
@@ -67,16 +67,20 @@ func (sender *Sender) SendWithInterval(url string, metrics *models.Health, secon
 	}
 }
 
-func (sender *Sender) sendRequest(url string) error {
-	request, _ := http.NewRequest(http.MethodPost, url, nil)
-	request.Header.Set("Content-Type", "text/plain")
+func (sender *Sender) sendRequest(url string, data []byte) error {
+	request, _ := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
+	request.Header.Add("Content-Type", "application/json")
 	res, err := sender.client.Do(request)
 
 	if err != nil {
-		log.WithFields(log.Fields{}).Error(fmt.Printf("Request failed with status: %d \n", res.StatusCode))
+		log.Error("Request fail", err)
 
 		return err
 	}
+
+	log.WithFields(log.Fields{
+		"StatusCode": res.StatusCode,
+	}).Info("Request ended")
 
 	defer res.Body.Close()
 

@@ -1,97 +1,92 @@
 package memory
 
 import (
-	"fmt"
 	"github.com/dmitriy/alerting/internal/server/applicationerrors"
 	"github.com/dmitriy/alerting/internal/server/model"
-	"github.com/dmitriy/alerting/internal/server/storage"
 	log "github.com/sirupsen/logrus"
 	"strconv"
 	"sync"
 )
 
 type metricStorage struct {
-	counters sync.Map
-	gauges   sync.Map
+	metrics  *sync.Map
+	events   map[string][]chan func()
+	onUpdate []func()
 }
 
 func New() *metricStorage {
-	return &metricStorage{
-		counters: sync.Map{},
-		gauges:   sync.Map{},
+	metricStore := metricStorage{
+		metrics: &sync.Map{},
+		events: map[string][]chan func(){
+			"OnUpdate": {
+				make(chan func()),
+			},
+		},
+		onUpdate: []func(){},
 	}
+	go func() {
+		chs := metricStore.events["OnUpdate"]
+		for _, ch := range chs {
+			for {
+				handler := <-ch
+				handler()
+				log.Info("Event: OnUpdate")
+			}
+		}
+	}()
+
+	return &metricStore
 }
 
-func (s *metricStorage) GetByNameAndType(name string, metricType string) (interface{}, error) {
+func (s *metricStorage) AddOnUpdateListener(fn func()) {
+	s.onUpdate = append(s.onUpdate, fn)
+}
+
+func (s *metricStorage) GetByNameAndType(name string, metricType string) (*model.Metric, error) {
+	metric, ok := s.metrics.Load(name)
+
+	if !ok {
+		return nil, applicationerrors.ErrNotFound
+	}
+	castedMetric := metric.(model.Metric)
+
 	if metricType == model.GaugeType {
-		metric, ok := s.gauges.Load(name)
-
-		if !ok {
-			return nil, applicationerrors.ErrNotFound
-		}
-
-		gauge := metric.(model.Gauge)
-
-		return gauge.Value, nil
+		return &castedMetric, nil
 	} else if metricType == model.CounterType {
-		metric, ok := s.counters.Load(name)
-
-		if !ok {
-			return nil, applicationerrors.ErrNotFound
-		}
-
-		counter := metric.(model.Counter)
-
-		return counter.Value, nil
+		return &castedMetric, nil
 	}
 
 	return nil, applicationerrors.ErrUnknownType
 }
 
-func (s *metricStorage) GetAll() *[]storage.MetricData {
-	var metrics []storage.MetricData
+func (s *metricStorage) GetAll() *[]model.Metric {
+	var metrics []model.Metric
 
-	s.gauges.Range(func(key, value interface{}) bool {
-		metric := value.(model.Gauge)
-		metricData := storage.MetricData{
-			Name:  key.(string),
-			Value: fmt.Sprint(metric.Value),
-		}
-		metrics = append(metrics, metricData)
+	s.metrics.Range(func(key, value interface{}) bool {
+		metric := value.(model.Metric)
 
-		return true
-	})
-
-	s.counters.Range(func(key, value interface{}) bool {
-		metric := value.(model.Counter)
-		metricData := storage.MetricData{
-			Name:  key.(string),
-			Value: fmt.Sprint(metric.Value),
-		}
-		metrics = append(metrics, metricData)
+		metrics = append(metrics, metric)
 
 		return true
 	})
 
 	return &metrics
-
 }
 
-func (s *metricStorage) UpdateMetric(metric string, value string, metricType string) error {
+func (s *metricStorage) UpdateMetric(name string, value string, metricType string) error {
+	var metric interface{}
+
 	if metricType == model.GaugeType {
-		foundedMetric := model.NewGauge(metric)
 		val, err := strconv.ParseFloat(value, 64)
 
 		if err != nil {
 			return applicationerrors.ErrInvalidValue
 		}
 
-		foundedMetric.Value = val
-		foundedMetric.Name = metric
-		s.gauges.Store(metric, foundedMetric)
+		metric = model.NewGauge(name, val)
 	} else if metricType == model.CounterType {
-		foundedMetric, ok := s.counters.Load(metric)
-
+		var ok bool
+		metric, ok = s.metrics.Load(name)
 		val, err := strconv.ParseInt(value, 10, 64)
 
 		if err != nil {
@@ -101,14 +96,9 @@ func (s *metricStorage) UpdateMetric(metric string, value string, metricType str
 		}
 
 		if !ok {
-			newCounter := model.NewCounter(metric)
-			newCounter.Value = val
-			newCounter.Name = metric
-			s.counters.Store(metric, newCounter)
+			metric = model.NewCounter(name, val)
 		} else {
-			foundedMetric := foundedMetric.(model.Counter)
-			foundedMetric.Value += val
-			s.counters.Store(metric, foundedMetric)
+			*metric.(model.Metric).IntValue += val
 		}
 	} else {
 		log.Info("Invalid metric Type")
@@ -116,5 +106,26 @@ func (s *metricStorage) UpdateMetric(metric string, value string, metricType str
 		return applicationerrors.ErrInvalidType
 	}
 
+	s.metrics.Store(name, metric)
+	s.emit("OnUpdate")
+
 	return nil
+}
+
+func (s *metricStorage) SaveAllMetricsData(metrics *[]model.Metric) {
+	for _, metric := range *metrics {
+		s.metrics.Store(metric.Name, metric)
+	}
+}
+
+func (s *metricStorage) emit(event string) {
+	if _, ok := s.events[event]; ok {
+		for _, handler := range s.events[event] {
+			go func(handler chan func()) {
+				for _, h := range s.onUpdate {
+					handler <- h
+				}
+			}(handler)
+		}
+	}
 }

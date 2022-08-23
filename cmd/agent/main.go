@@ -1,28 +1,20 @@
 package main
 
 import (
-	"github.com/dmitriy/alerting/internal/agent/client"
-	"github.com/dmitriy/alerting/internal/agent/service"
+	"fmt"
 	log "github.com/sirupsen/logrus"
-	"os"
 )
 
-func init() {
-	log.SetFormatter(&log.TextFormatter{
-		DisableColors: false,
-		FullTimestamp: true,
-	})
-	log.SetOutput(os.Stdout)
-	log.SetLevel(log.InfoLevel)
+type App struct {
+	conf Config
 }
 
 func main() {
+	app := App{
+		conf: Config{},
+	}
+	app.config()
+	log.Infof("Agent starting. Poll interval: %s; Report interval: %s", fmt.Sprint(app.conf.PollInterval), fmt.Sprint(app.conf.ReportInterval))
 
-	metricService := service.New()
-	go metricService.GatherMetricsByInterval(2)
-
-	sender := client.New()
-	go sender.SendWithInterval("http://localhost:8080", &metricService.Health, 10)
-
-	select {}
+	app.run()
 }

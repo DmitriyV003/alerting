@@ -1,12 +1,11 @@
 package storage
 
-type MetricData struct {
-	Name  string
-	Value interface{}
-}
+import "github.com/dmitriy/alerting/internal/server/model"
 
 type MetricStorage interface {
 	UpdateMetric(metric string, value string, metricType string) error
-	GetAll() *[]MetricData
-	GetByNameAndType(name string, metricType string) (interface{}, error)
+	GetAll() *[]model.Metric
+	GetByNameAndType(name string, metricType string) (*model.Metric, error)
+	SaveAllMetricsData(metrics *[]model.Metric)
+	AddOnUpdateListener(fn func())
 }
