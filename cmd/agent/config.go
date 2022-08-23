@@ -1,4 +1,4 @@
-package config
+package main
 
 import (
 	"flag"
@@ -13,20 +13,20 @@ type Config struct {
 	PollInterval   time.Duration `env:"POLL_INTERVAL"`
 }
 
-const DefaultAddress = "localhost:8080"
-const DefaultReportInterval = "10s"
-const DefaultPollInterval = "2s"
+const defaultAddress = "localhost:8080"
+const defaultReportInterval = "10s"
+const defaultPollInterval = "2s"
 
-func ParseEnv(conf *Config) {
+func (conf *Config) parseEnv() {
 	err := env.Parse(conf)
 	if err != nil {
 		log.Error("Unable to parse ENV: ", err)
 	}
 
-	reportInterval, _ := time.ParseDuration(DefaultReportInterval)
-	pollInterval, _ := time.ParseDuration(DefaultPollInterval)
+	reportInterval, _ := time.ParseDuration(defaultReportInterval)
+	pollInterval, _ := time.ParseDuration(defaultPollInterval)
 
-	address := flag.String("a", DefaultAddress, "Server address")
+	address := flag.String("a", defaultAddress, "Server address")
 	reportIntervalFlag := flag.Duration("r", reportInterval, "Report Interval")
 	pollIntervalFlag := flag.Duration("p", pollInterval, "Poll Interval")
 	flag.PrintDefaults()
