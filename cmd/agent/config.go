@@ -1,4 +1,4 @@
-package config
+package main
 
 import (
 	"flag"
@@ -17,7 +17,7 @@ const DefaultAddress = "localhost:8080"
 const DefaultReportInterval = "10s"
 const DefaultPollInterval = "2s"
 
-func ParseEnv(conf *Config) {
+func (conf *Config) parseEnv() {
 	err := env.Parse(conf)
 	if err != nil {
 		log.Error("Unable to parse ENV: ", err)
