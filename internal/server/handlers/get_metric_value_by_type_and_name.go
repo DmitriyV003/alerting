@@ -48,8 +48,7 @@ func (h *GetMetricValueByTypeAndNameHandler) Handle(w http.ResponseWriter, r *ht
 	}
 
 	if err != nil {
-		log.Info("Unknown error")
-		applicationerrors.WriteHTTPError(&w, http.StatusInternalServerError)
+		applicationerrors.SwitchError(err, &w)
 
 		return
 	}
@@ -57,7 +56,7 @@ func (h *GetMetricValueByTypeAndNameHandler) Handle(w http.ResponseWriter, r *ht
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(metricBytes)
 	if err != nil {
-		log.Info("Unknown error")
+		applicationerrors.SwitchError(err, &w)
 
 		return
 	}

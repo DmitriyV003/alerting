@@ -4,7 +4,6 @@ import (
 	"github.com/dmitriy/alerting/internal/server/applicationerrors"
 	"github.com/dmitriy/alerting/internal/server/model"
 	"github.com/dmitriy/alerting/internal/server/storage"
-	log "github.com/sirupsen/logrus"
 	"html/template"
 	"net/http"
 )
@@ -33,8 +32,7 @@ func (h *GetAllMetricHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	err := ts.Execute(w, viewMetrics)
 
 	if err != nil {
-		log.Error("Exec html: ", err)
-		applicationerrors.WriteHTTPError(&w, http.StatusInternalServerError)
+		applicationerrors.SwitchError(err, &w)
 
 		return
 	}
