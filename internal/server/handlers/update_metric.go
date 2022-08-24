@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/dmitriy/alerting/internal/agent/models"
 	"github.com/dmitriy/alerting/internal/server/applicationerrors"
@@ -56,12 +55,8 @@ func (handler *UpdateMetricHandler) Handle(w http.ResponseWriter, r *http.Reques
 
 	err := handler.storage.UpdateMetric(name, value, metricType)
 
-	if err != nil && errors.Is(err, applicationerrors.ErrInvalidType) {
-		applicationerrors.WriteHTTPError(&w, http.StatusNotImplemented)
-
-		return
-	} else if err != nil && errors.Is(err, applicationerrors.ErrInvalidValue) {
-		applicationerrors.WriteHTTPError(&w, http.StatusBadRequest)
+	if err != nil {
+		applicationerrors.SwitchError(err, &w)
 
 		return
 	}

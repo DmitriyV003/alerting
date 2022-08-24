@@ -48,7 +48,7 @@ func (h *GetMetricByTypeAndNameHandler) Handle(w http.ResponseWriter, r *http.Re
 	metricBytes, err := json.Marshal(metric)
 
 	if err != nil {
-		log.Info("Unknown error")
+		log.Info("Unknown error: ", err)
 		applicationerrors.WriteHTTPError(&w, http.StatusInternalServerError)
 
 		return
@@ -64,7 +64,7 @@ func (h *GetMetricByTypeAndNameHandler) Handle(w http.ResponseWriter, r *http.Re
 	}).Info("Got metric by Type and Name")
 
 	if err != nil {
-		log.Info("Unknown error")
+		applicationerrors.SwitchError(err, &w)
 
 		return
 	}
