@@ -12,12 +12,14 @@ type Config struct {
 	StoreInterval time.Duration `env:"STORE_INTERVAL"`
 	StoreFile     string        `env:"STORE_FILE"`
 	Restore       string        `env:"RESTORE"`
+	Key           string        `env:"KEY"`
 }
 
 const defaultAddress = "localhost:8080"
 const defaultStoreInterval = "300s"
 const defaultStoreFile = "/tmp/devops-metrics-db.json"
 const defaultRestore = "true"
+const defaultKey = ""
 
 func (conf *Config) parseEnv() {
 	err := env.Parse(conf)
@@ -31,6 +33,7 @@ func (conf *Config) parseEnv() {
 	storeInterval := flag.Duration("i", storeIntervalDuration, "Store data on disk interval")
 	storeFile := flag.String("f", defaultStoreFile, "File storage for data")
 	restore := flag.String("r", defaultRestore, "Restore data from file on restart")
+	key := flag.String("k", defaultKey, "Key for hashing")
 	flag.PrintDefaults()
 	flag.Parse()
 
@@ -45,5 +48,8 @@ func (conf *Config) parseEnv() {
 	}
 	if conf.Restore == "" {
 		conf.Restore = *restore
+	}
+	if conf.Key == "" {
+		conf.Key = *key
 	}
 }

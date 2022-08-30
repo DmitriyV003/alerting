@@ -5,23 +5,31 @@ import (
 	"github.com/dmitriy/alerting/internal/server/applicationerrors"
 	"github.com/dmitriy/alerting/internal/server/model"
 	"github.com/dmitriy/alerting/internal/server/storage"
+	"github.com/dmitriy/alerting/internal/server/transformers"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 )
 
 type GetMetricByTypeAndNameHandler struct {
-	storage storage.MetricStorage
+	storage           storage.MetricStorage
+	metricTransformer *transformers.MetricTransformer
 }
 
-func NewGetMetricByTypeAndNameHandler(store storage.MetricStorage) *GetMetricByTypeAndNameHandler {
+type metricRequest struct {
+	Name string           `json:"id"`
+	Type model.MetricType `json:"type"`
+}
+
+func NewGetMetricByTypeAndNameHandler(store storage.MetricStorage, key string) *GetMetricByTypeAndNameHandler {
 	return &GetMetricByTypeAndNameHandler{
-		storage: store,
+		storage:           store,
+		metricTransformer: transformers.NewTransformer(key),
 	}
 }
 
 func (h *GetMetricByTypeAndNameHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	var name string
-	var metricReq model.Metric
+	var metricReq metricRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&metricReq); err != nil {
 		applicationerrors.WriteHTTPError(&w, http.StatusBadRequest)
@@ -29,11 +37,14 @@ func (h *GetMetricByTypeAndNameHandler) Handle(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	log.WithFields(log.Fields{
+		"RequestBody": metricReq,
+	}).Info("Got request")
+
 	name = metricReq.Name
 	metric, err := h.storage.GetByNameAndType(name, string(metricReq.Type))
 
 	if name == "" {
-		log.Infof("Metric Not Found: %s", name)
 		applicationerrors.WriteHTTPError(&w, http.StatusNotFound)
 
 		return
@@ -45,10 +56,11 @@ func (h *GetMetricByTypeAndNameHandler) Handle(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	metric = h.metricTransformer.AddHash(metric)
 	metricBytes, err := json.Marshal(metric)
 
 	if err != nil {
-		log.Info("Unknown error: ", err)
+		log.Error("Unknown error: ", err)
 		applicationerrors.WriteHTTPError(&w, http.StatusInternalServerError)
 
 		return

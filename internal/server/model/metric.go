@@ -32,4 +32,5 @@ type Metric struct {
 	Type       MetricType `json:"type"`
 	IntValue   *int64     `json:"delta,omitempty"`
 	FloatValue *float64   `json:"value,omitempty"`
+	Hash       string     `json:"hash,omitempty"`
 }

@@ -50,9 +50,7 @@ func (s *metricStorage) GetByNameAndType(name string, metricType string) (*model
 	}
 	castedMetric := metric.(model.Metric)
 
-	if metricType == model.GaugeType {
-		return &castedMetric, nil
-	} else if metricType == model.CounterType {
+	if metricType == model.GaugeType || metricType == model.CounterType {
 		return &castedMetric, nil
 	}
 

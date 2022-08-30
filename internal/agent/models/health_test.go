@@ -11,6 +11,7 @@ func TestNewGauge(t *testing.T) {
 		value float64
 	}
 	val := 12.23
+	key := ""
 	tests := []struct {
 		name string
 		args args
@@ -27,12 +28,13 @@ func TestNewGauge(t *testing.T) {
 				Type:       GaugeType,
 				IntValue:   nil,
 				FloatValue: &val,
+				Hash:       key,
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewGauge(tt.args.name, tt.args.value); !reflect.DeepEqual(got, tt.want) {
+			if got := NewGauge(tt.args.name, tt.args.value, key); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewGauge() = %v, want %v", got, tt.want)
 			}
 		})
