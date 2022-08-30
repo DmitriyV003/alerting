@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/dmitriy/alerting/internal/agent/models"
+	"github.com/dmitriy/alerting/internal/hasher"
 	"github.com/stretchr/testify/assert"
 	"sync"
 	"testing"
@@ -19,6 +20,7 @@ func TestMetricService_gatherMetrics(t *testing.T) {
 			name: "Gather metric test",
 			fields: struct{ Health *models.Health }{Health: &models.Health{
 				Metrics: &sync.Map{},
+				Hasher:  hasher.New("fg"),
 			}},
 		},
 	}
@@ -52,12 +54,16 @@ func TestNew(t *testing.T) {
 			name: "Create Metric Service Test",
 			want: &MetricService{Health: struct {
 				Metrics *sync.Map
-			}{Metrics: &sync.Map{}}},
+				Hasher  *hasher.Hasher
+			}{
+				Metrics: &sync.Map{},
+				Hasher:  hasher.New("fg"),
+			}},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, New(), "New()")
+			assert.Equalf(t, tt.want, New("fg"), "New()")
 		})
 	}
 }

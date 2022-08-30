@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/dmitriy/alerting/internal/hasher"
 	"github.com/dmitriy/alerting/internal/server/handlers"
 	"github.com/dmitriy/alerting/internal/server/service"
 	"github.com/dmitriy/alerting/internal/server/storage/memory"
@@ -22,10 +23,11 @@ func (app *App) routes() http.Handler {
 	router.Use(middleware.Heartbeat("/ping"))
 
 	store := memory.New()
-	updateMetricHandler := handlers.NewUpdateMetricHandler(store)
+	mHasher := hasher.New(app.conf.Key)
+	updateMetricHandler := handlers.NewUpdateMetricHandler(store, mHasher)
 	getAllMetricsHandler := handlers.NewGetAllMetricHandler(store)
 	getMetricValueByTypeAndNameHandler := handlers.NewGetMetricValueByTypeAndNameHandler(store)
-	getMetricByTypeAndNameHandler := handlers.NewGetMetricByTypeAndNameHandler(store)
+	getMetricByTypeAndNameHandler := handlers.NewGetMetricByTypeAndNameHandler(store, app.conf.Key)
 
 	restore, _ := strconv.ParseBool(app.conf.Restore)
 	fileSaver := service.NewFileSaver(app.conf.StoreFile, app.conf.StoreInterval, restore, store)

@@ -11,9 +11,11 @@ type Config struct {
 	Address        string        `env:"ADDRESS"`
 	ReportInterval time.Duration `env:"REPORT_INTERVAL"`
 	PollInterval   time.Duration `env:"POLL_INTERVAL"`
+	Key            string        `env:"KEY"`
 }
 
 const defaultAddress = "localhost:8080"
+const defaultKey = ""
 const defaultReportInterval = "10s"
 const defaultPollInterval = "2s"
 
@@ -27,6 +29,7 @@ func (conf *Config) parseEnv() {
 	pollInterval, _ := time.ParseDuration(defaultPollInterval)
 
 	address := flag.String("a", defaultAddress, "Server address")
+	key := flag.String("k", defaultKey, "Key for hashing")
 	reportIntervalFlag := flag.Duration("r", reportInterval, "Report Interval")
 	pollIntervalFlag := flag.Duration("p", pollInterval, "Poll Interval")
 	flag.PrintDefaults()
@@ -34,6 +37,9 @@ func (conf *Config) parseEnv() {
 
 	if conf.Address == "" {
 		conf.Address = *address
+	}
+	if conf.Key == "" {
+		conf.Key = *key
 	}
 	if conf.ReportInterval.String() == "0s" {
 		conf.ReportInterval = *reportIntervalFlag

@@ -1,9 +1,11 @@
 package service
 
 import (
+	"fmt"
 	"github.com/dmitriy/alerting/internal/agent/models"
 	"math/rand"
 	"runtime"
+	"strconv"
 	"time"
 )
 
@@ -11,8 +13,8 @@ type MetricService struct {
 	Health models.Health
 }
 
-func New() *MetricService {
-	return &MetricService{Health: *models.NewHealth()}
+func New(key string) *MetricService {
+	return &MetricService{Health: *models.NewHealth(key)}
 }
 
 func (metricService *MetricService) gatherMetrics() {
@@ -23,40 +25,40 @@ func (metricService *MetricService) gatherMetrics() {
 
 	currentCounter, ok := metricService.Health.Metrics.Load("PollCount")
 	if !ok {
-		metricService.Health.Metrics.Store("PollCount", models.NewCounter("PollCount", 0))
+		metricService.Health.Store("PollCount", models.CounterType, fmt.Sprint(0))
 	} else {
 		metric := currentCounter.(models.Metric)
-		metricService.Health.Metrics.Store("PollCount", models.NewCounter("PollCount", *metric.IntValue+1))
+		metricService.Health.Store("PollCount", models.CounterType, strconv.FormatInt(*metric.IntValue+1, 10))
 	}
 
-	metricService.Health.Metrics.Store("Alloc", models.NewGauge("Alloc", float64(runtimeStats.Alloc)))
-	metricService.Health.Metrics.Store("Frees", models.NewGauge("Frees", float64(runtimeStats.Frees)))
-	metricService.Health.Metrics.Store("BuckHashSys", models.NewGauge("BuckHashSys", float64(runtimeStats.BuckHashSys)))
-	metricService.Health.Metrics.Store("GCCPUFraction", models.NewGauge("GCCPUFraction", runtimeStats.GCCPUFraction))
-	metricService.Health.Metrics.Store("GCSys", models.NewGauge("GCSys", float64(runtimeStats.GCSys)))
-	metricService.Health.Metrics.Store("HeapAlloc", models.NewGauge("HeapAlloc", float64(runtimeStats.HeapAlloc)))
-	metricService.Health.Metrics.Store("HeapObjects", models.NewGauge("HeapObjects", float64(runtimeStats.HeapObjects)))
-	metricService.Health.Metrics.Store("HeapReleased", models.NewGauge("HeapReleased", float64(runtimeStats.HeapReleased)))
-	metricService.Health.Metrics.Store("HeapIdle", models.NewGauge("HeapIdle", float64(runtimeStats.HeapIdle)))
-	metricService.Health.Metrics.Store("HeapInuse", models.NewGauge("HeapInuse", float64(runtimeStats.HeapInuse)))
-	metricService.Health.Metrics.Store("HeapSys", models.NewGauge("HeapSys", float64(runtimeStats.HeapSys)))
-	metricService.Health.Metrics.Store("LastGC", models.NewGauge("LastGC", float64(runtimeStats.LastGC)))
-	metricService.Health.Metrics.Store("Lookups", models.NewGauge("Lookups", float64(runtimeStats.Lookups)))
-	metricService.Health.Metrics.Store("MCacheInuse", models.NewGauge("MCacheInuse", float64(runtimeStats.MCacheInuse)))
-	metricService.Health.Metrics.Store("MCacheSys", models.NewGauge("MCacheSys", float64(runtimeStats.MCacheSys)))
-	metricService.Health.Metrics.Store("MSpanInuse", models.NewGauge("MSpanInuse", float64(runtimeStats.MSpanInuse)))
-	metricService.Health.Metrics.Store("MSpanSys", models.NewGauge("MSpanSys", float64(runtimeStats.MSpanSys)))
-	metricService.Health.Metrics.Store("Mallocs", models.NewGauge("Mallocs", float64(runtimeStats.Mallocs)))
-	metricService.Health.Metrics.Store("NextGC", models.NewGauge("NextGC", float64(runtimeStats.NextGC)))
-	metricService.Health.Metrics.Store("NumForcedGC", models.NewGauge("NumForcedGC", float64(runtimeStats.NumForcedGC)))
-	metricService.Health.Metrics.Store("NumGC", models.NewGauge("NumGC", float64(runtimeStats.NumGC)))
-	metricService.Health.Metrics.Store("OtherSys", models.NewGauge("OtherSys", float64(runtimeStats.OtherSys)))
-	metricService.Health.Metrics.Store("PauseTotalNs", models.NewGauge("PauseTotalNs", float64(runtimeStats.PauseTotalNs)))
-	metricService.Health.Metrics.Store("StackInuse", models.NewGauge("StackInuse", float64(runtimeStats.StackInuse)))
-	metricService.Health.Metrics.Store("StackSys", models.NewGauge("StackSys", float64(runtimeStats.StackSys)))
-	metricService.Health.Metrics.Store("Sys", models.NewGauge("Sys", float64(runtimeStats.Sys)))
-	metricService.Health.Metrics.Store("TotalAlloc", models.NewGauge("TotalAlloc", float64(runtimeStats.TotalAlloc)))
-	metricService.Health.Metrics.Store("RandomValue", models.NewGauge("RandomValue", rand.Float64()))
+	metricService.Health.Store("Alloc", models.GaugeType, strconv.FormatUint(runtimeStats.Alloc, 10))
+	metricService.Health.Store("Frees", models.GaugeType, strconv.FormatUint(runtimeStats.Frees, 10))
+	metricService.Health.Store("BuckHashSys", models.GaugeType, strconv.FormatUint(runtimeStats.BuckHashSys, 10))
+	metricService.Health.Store("GCCPUFraction", models.GaugeType, strconv.FormatUint(uint64(runtimeStats.GCCPUFraction), 10))
+	metricService.Health.Store("GCSys", models.GaugeType, strconv.FormatUint(runtimeStats.GCSys, 10))
+	metricService.Health.Store("HeapAlloc", models.GaugeType, strconv.FormatUint(runtimeStats.HeapAlloc, 10))
+	metricService.Health.Store("HeapObjects", models.GaugeType, strconv.FormatUint(runtimeStats.HeapObjects, 10))
+	metricService.Health.Store("HeapReleased", models.GaugeType, strconv.FormatUint(runtimeStats.HeapReleased, 10))
+	metricService.Health.Store("HeapIdle", models.GaugeType, strconv.FormatUint(runtimeStats.HeapIdle, 10))
+	metricService.Health.Store("HeapInuse", models.GaugeType, strconv.FormatUint(runtimeStats.HeapInuse, 10))
+	metricService.Health.Store("HeapSys", models.GaugeType, strconv.FormatUint(runtimeStats.HeapSys, 10))
+	metricService.Health.Store("LastGC", models.GaugeType, strconv.FormatUint(runtimeStats.LastGC, 10))
+	metricService.Health.Store("Lookups", models.GaugeType, strconv.FormatUint(runtimeStats.Lookups, 10))
+	metricService.Health.Store("MCacheInuse", models.GaugeType, strconv.FormatUint(runtimeStats.MCacheInuse, 10))
+	metricService.Health.Store("MCacheSys", models.GaugeType, strconv.FormatUint(runtimeStats.MCacheSys, 10))
+	metricService.Health.Store("MSpanInuse", models.GaugeType, strconv.FormatUint(runtimeStats.MSpanInuse, 10))
+	metricService.Health.Store("MSpanSys", models.GaugeType, strconv.FormatUint(runtimeStats.MSpanSys, 10))
+	metricService.Health.Store("Mallocs", models.GaugeType, strconv.FormatUint(runtimeStats.Mallocs, 10))
+	metricService.Health.Store("NextGC", models.GaugeType, strconv.FormatUint(runtimeStats.NextGC, 10))
+	metricService.Health.Store("NumForcedGC", models.GaugeType, strconv.FormatUint(uint64(runtimeStats.NumForcedGC), 10))
+	metricService.Health.Store("NumGC", models.GaugeType, strconv.FormatUint(uint64(runtimeStats.NumGC), 10))
+	metricService.Health.Store("OtherSys", models.GaugeType, strconv.FormatUint(runtimeStats.OtherSys, 10))
+	metricService.Health.Store("PauseTotalNs", models.GaugeType, strconv.FormatUint(runtimeStats.PauseTotalNs, 10))
+	metricService.Health.Store("StackInuse", models.GaugeType, strconv.FormatUint(runtimeStats.StackInuse, 10))
+	metricService.Health.Store("StackSys", models.GaugeType, strconv.FormatUint(runtimeStats.StackSys, 10))
+	metricService.Health.Store("Sys", models.GaugeType, strconv.FormatUint(runtimeStats.Sys, 10))
+	metricService.Health.Store("TotalAlloc", models.GaugeType, strconv.FormatUint(runtimeStats.TotalAlloc, 10))
+	metricService.Health.Store("RandomValue", models.GaugeType, fmt.Sprint(rand.Float64()))
 }
 
 func (metricService *MetricService) GatherMetricsByInterval(duration time.Duration) {
