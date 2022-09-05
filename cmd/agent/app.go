@@ -27,7 +27,7 @@ func (app *App) run() {
 	ticker := time.NewTicker(time.Second)
 	clientPing := http.Client{}
 	for range ticker.C {
-		request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/ping", app.conf.Address), nil)
+		request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/heartbeat", app.conf.Address), nil)
 		res, err := clientPing.Do(request)
 		log.Info("Ping Server: ", err)
 		if err == nil && res != nil && res.StatusCode == 200 {

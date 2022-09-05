@@ -42,6 +42,18 @@ func (mr *MockMetricStorageMockRecorder) AddOnUpdateListener(fn interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddOnUpdateListener", reflect.TypeOf((*MockMetricStorage)(nil).AddOnUpdateListener), fn)
 }
 
+// Emit mocks base method.
+func (m *MockMetricStorage) Emit(event string) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Emit", event)
+}
+
+// Emit indicates an expected call of Emit.
+func (mr *MockMetricStorageMockRecorder) Emit(event interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Emit", reflect.TypeOf((*MockMetricStorage)(nil).Emit), event)
+}
+
 // GetAll mocks base method.
 func (m *MockMetricStorage) GetAll() *[]model.Metric {
 	m.ctrl.T.Helper()
