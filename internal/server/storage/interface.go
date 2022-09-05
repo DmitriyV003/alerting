@@ -8,4 +8,5 @@ type MetricStorage interface {
 	GetByNameAndType(name string, metricType string) (*model.Metric, error)
 	SaveAllMetricsData(metrics *[]model.Metric)
 	AddOnUpdateListener(fn func())
+	Emit(event string)
 }

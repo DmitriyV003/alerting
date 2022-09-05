@@ -3,43 +3,25 @@ package memory
 import (
 	"github.com/dmitriy/alerting/internal/server/applicationerrors"
 	"github.com/dmitriy/alerting/internal/server/model"
+	"github.com/dmitriy/alerting/internal/server/storage/commonstorage"
 	log "github.com/sirupsen/logrus"
 	"strconv"
 	"sync"
 )
 
 type metricStorage struct {
-	metrics  *sync.Map
-	events   map[string][]chan func()
-	onUpdate []func()
+	metrics *sync.Map
+	*commonstorage.CommonStorage
 }
 
 func New() *metricStorage {
 	metricStore := metricStorage{
-		metrics: &sync.Map{},
-		events: map[string][]chan func(){
-			"OnUpdate": {
-				make(chan func()),
-			},
-		},
-		onUpdate: []func(){},
+		metrics:       &sync.Map{},
+		CommonStorage: commonstorage.New(),
 	}
-	go func() {
-		chs := metricStore.events["OnUpdate"]
-		for _, ch := range chs {
-			for {
-				handler := <-ch
-				handler()
-				log.Info("Event: OnUpdate")
-			}
-		}
-	}()
+	metricStore.ListenEvents()
 
 	return &metricStore
-}
-
-func (s *metricStorage) AddOnUpdateListener(fn func()) {
-	s.onUpdate = append(s.onUpdate, fn)
 }
 
 func (s *metricStorage) GetByNameAndType(name string, metricType string) (*model.Metric, error) {
@@ -105,7 +87,7 @@ func (s *metricStorage) UpdateMetric(name string, value string, metricType strin
 	}
 
 	s.metrics.Store(name, metric)
-	s.emit("OnUpdate")
+	s.Emit("OnUpdate")
 
 	return nil
 }
@@ -113,17 +95,5 @@ func (s *metricStorage) UpdateMetric(name string, value string, metricType strin
 func (s *metricStorage) SaveAllMetricsData(metrics *[]model.Metric) {
 	for _, metric := range *metrics {
 		s.metrics.Store(metric.Name, metric)
-	}
-}
-
-func (s *metricStorage) emit(event string) {
-	if _, ok := s.events[event]; ok {
-		for _, handler := range s.events[event] {
-			go func(handler chan func()) {
-				for _, h := range s.onUpdate {
-					handler <- h
-				}
-			}(handler)
-		}
 	}
 }
