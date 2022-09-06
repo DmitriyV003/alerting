@@ -1,6 +1,7 @@
 package mocks
 
 import (
+	context "context"
 	reflect "reflect"
 
 	model "github.com/dmitriy/alerting/internal/server/model"
@@ -55,56 +56,56 @@ func (mr *MockMetricStorageMockRecorder) Emit(event interface{}) *gomock.Call {
 }
 
 // GetAll mocks base method.
-func (m *MockMetricStorage) GetAll() *[]model.Metric {
+func (m *MockMetricStorage) GetAll(ctx context.Context) *[]model.Metric {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAll")
+	ret := m.ctrl.Call(m, "GetAll", ctx)
 	ret0, _ := ret[0].(*[]model.Metric)
 	return ret0
 }
 
 // GetAll indicates an expected call of GetAll.
-func (mr *MockMetricStorageMockRecorder) GetAll() *gomock.Call {
+func (mr *MockMetricStorageMockRecorder) GetAll(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockMetricStorage)(nil).GetAll))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockMetricStorage)(nil).GetAll), ctx)
 }
 
 // GetByNameAndType mocks base method.
-func (m *MockMetricStorage) GetByNameAndType(name, metricType string) (*model.Metric, error) {
+func (m *MockMetricStorage) GetByNameAndType(ctx context.Context, name, metricType string) (*model.Metric, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByNameAndType", name, metricType)
+	ret := m.ctrl.Call(m, "GetByNameAndType", ctx, name, metricType)
 	ret0, _ := ret[0].(*model.Metric)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetByNameAndType indicates an expected call of GetByNameAndType.
-func (mr *MockMetricStorageMockRecorder) GetByNameAndType(name, metricType interface{}) *gomock.Call {
+func (mr *MockMetricStorageMockRecorder) GetByNameAndType(ctx, name, metricType interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByNameAndType", reflect.TypeOf((*MockMetricStorage)(nil).GetByNameAndType), name, metricType)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByNameAndType", reflect.TypeOf((*MockMetricStorage)(nil).GetByNameAndType), ctx, name, metricType)
 }
 
 // SaveAllMetricsData mocks base method.
-func (m *MockMetricStorage) SaveAllMetricsData(metrics *[]model.Metric) {
+func (m *MockMetricStorage) SaveAllMetricsData(ctx context.Context, metrics *[]model.Metric) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SaveAllMetricsData", metrics)
+	m.ctrl.Call(m, "SaveAllMetricsData", ctx, metrics)
 }
 
 // SaveAllMetricsData indicates an expected call of SaveAllMetricsData.
-func (mr *MockMetricStorageMockRecorder) SaveAllMetricsData(metrics interface{}) *gomock.Call {
+func (mr *MockMetricStorageMockRecorder) SaveAllMetricsData(ctx, metrics interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveAllMetricsData", reflect.TypeOf((*MockMetricStorage)(nil).SaveAllMetricsData), metrics)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveAllMetricsData", reflect.TypeOf((*MockMetricStorage)(nil).SaveAllMetricsData), ctx, metrics)
 }
 
 // UpdateMetric mocks base method.
-func (m *MockMetricStorage) UpdateMetric(metric, value, metricType string) error {
+func (m *MockMetricStorage) UpdateOrCreate(ctx context.Context, metric, value, metricType string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateMetric", metric, value, metricType)
+	ret := m.ctrl.Call(m, "UpdateOrCreate", ctx, metric, value, metricType)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateMetric indicates an expected call of UpdateMetric.
-func (mr *MockMetricStorageMockRecorder) UpdateMetric(metric, value, metricType interface{}) *gomock.Call {
+func (mr *MockMetricStorageMockRecorder) UpdateMetric(ctx, metric, value, metricType interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateMetric", reflect.TypeOf((*MockMetricStorage)(nil).UpdateMetric), metric, value, metricType)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOrCreate", reflect.TypeOf((*MockMetricStorage)(nil).UpdateOrCreate), ctx, metric, value, metricType)
 }

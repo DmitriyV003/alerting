@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/dmitriy/alerting/internal/agent/models"
@@ -70,7 +71,7 @@ func (handler *UpdateMetricHandler) Handle(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	err := handler.storage.UpdateMetric(name, value, metricType)
+	err := handler.storage.UpdateOrCreate(context.Background(), name, value, metricType)
 
 	if err != nil {
 		applicationerrors.SwitchError(err, &w)
@@ -83,7 +84,7 @@ func (handler *UpdateMetricHandler) Handle(w http.ResponseWriter, r *http.Reques
 		"Type":  metricType,
 		"Value": value,
 		"Hash":  calculatedHash,
-	}).Info("Updated metric")
+	}).Info("Updated metric!")
 
 	res, _ := json.Marshal(response{Hash: calculatedHash})
 	w.Header().Set("Content-Type", "application/json")

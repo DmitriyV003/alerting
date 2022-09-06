@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/dmitriy/alerting/internal/agent/models"
@@ -24,7 +25,7 @@ func NewGetMetricValueByTypeAndNameHandler(store storage.MetricStorage) *GetMetr
 func (h *GetMetricValueByTypeAndNameHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	name := chi.URLParam(r, "name")
 	metricType := chi.URLParam(r, "type")
-	metric, err := h.storage.GetByNameAndType(name, metricType)
+	metric, err := h.storage.GetByNameAndType(context.Background(), name, metricType)
 
 	if name == "" {
 		log.Info(fmt.Printf("Metric Not Found "))

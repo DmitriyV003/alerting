@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"github.com/dmitriy/alerting/internal/server/applicationerrors"
 	"github.com/dmitriy/alerting/internal/server/model"
 	"github.com/dmitriy/alerting/internal/server/storage"
@@ -23,7 +24,7 @@ func NewGetAllMetricHandler(store storage.MetricStorage) *GetAllMetricHandler {
 }
 
 func (h *GetAllMetricHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	metrics := h.storage.GetAll()
+	metrics := h.storage.GetAll(context.Background())
 	viewMetrics := viewData{Metrics: *metrics}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
