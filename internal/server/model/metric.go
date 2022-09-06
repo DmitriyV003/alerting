@@ -11,23 +11,24 @@ func newMetric(name string) *Metric {
 	}
 }
 
-func NewGauge(name string, val float64) Metric {
+func NewGauge(name string, val float64) *Metric {
 	metric := newMetric(name)
 	metric.Type = GaugeType
 	metric.FloatValue = &val
 
-	return *metric
+	return metric
 }
 
-func NewCounter(name string, val int64) Metric {
+func NewCounter(name string, val int64) *Metric {
 	metric := newMetric(name)
 	metric.Type = CounterType
 	metric.IntValue = &val
 
-	return *metric
+	return metric
 }
 
 type Metric struct {
+	ID         *int64     `json:"-"`
 	Name       string     `json:"id"`
 	Type       MetricType `json:"type"`
 	IntValue   *int64     `json:"delta,omitempty"`

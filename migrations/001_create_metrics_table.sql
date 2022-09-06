@@ -3,7 +3,7 @@ CREATE TYPE metric_type AS ENUM('counter', 'gauge');
 
 CREATE TABLE IF NOT EXISTS metrics(
     id serial PRIMARY KEY,
-    name VARCHAR (255) UNIQUE NOT NULL,
+    name VARCHAR (255) NOT NULL,
     type metric_type NOT NULL,
     int_value BIGINT,
     float_value DOUBLE PRECISION

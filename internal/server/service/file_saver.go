@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/dmitriy/alerting/internal/server/model"
 	"github.com/dmitriy/alerting/internal/server/storage"
@@ -49,7 +50,7 @@ func (f *FileSaver) Restore() {
 		return
 	}
 
-	f.store.SaveAllMetricsData(&metrics)
+	f.store.SaveAllMetricsData(context.Background(), &metrics)
 	log.Info("Data restored from file")
 }
 
@@ -67,7 +68,7 @@ func (f *FileSaver) StoreAllDataWithInterval() {
 }
 
 func (f *FileSaver) StoreAllData() {
-	metrics := f.store.GetAll()
+	metrics := f.store.GetAll(context.Background())
 
 	jsonData, err := json.Marshal(metrics)
 	if err != nil {

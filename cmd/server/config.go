@@ -58,4 +58,13 @@ func (conf *Config) parseEnv() {
 	if conf.DatabaseDsn == "" {
 		conf.DatabaseDsn = *databaseDsn
 	}
+
+	log.WithFields(log.Fields{
+		"Address":       conf.Address,
+		"StoreInterval": conf.StoreInterval,
+		"StoreFile":     conf.StoreFile,
+		"Restore":       conf.Restore,
+		"Key":           conf.Key,
+		"DatabaseDsn":   conf.DatabaseDsn,
+	}).Info("Environment variables")
 }

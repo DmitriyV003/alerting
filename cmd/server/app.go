@@ -113,7 +113,7 @@ func (app *App) migrate() {
 
 	sql := `CREATE TABLE IF NOT EXISTS metrics(
     	id serial PRIMARY KEY,
-    	name VARCHAR (255) UNIQUE NOT NULL,
+    	name VARCHAR (255) NOT NULL,
     	type VARCHAR (255) NOT NULL,
     	int_value BIGINT,
     	float_value DOUBLE PRECISION

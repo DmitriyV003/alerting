@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/dmitriy/alerting/internal/server/applicationerrors"
 	"github.com/dmitriy/alerting/internal/server/model"
@@ -37,12 +38,8 @@ func (h *GetMetricByTypeAndNameHandler) Handle(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	log.WithFields(log.Fields{
-		"RequestBody": metricReq,
-	}).Info("Got request")
-
 	name = metricReq.Name
-	metric, err := h.storage.GetByNameAndType(name, string(metricReq.Type))
+	metric, err := h.storage.GetByNameAndType(context.Background(), name, string(metricReq.Type))
 
 	if name == "" {
 		applicationerrors.WriteHTTPError(&w, http.StatusNotFound)
@@ -73,7 +70,7 @@ func (h *GetMetricByTypeAndNameHandler) Handle(w http.ResponseWriter, r *http.Re
 	log.WithFields(log.Fields{
 		"Metric": metricReq.Name,
 		"Type":   metricReq.Type,
-	}).Info("Got metric by Type and Name")
+	}).Info("GET metric by Type and Name")
 
 	if err != nil {
 		applicationerrors.SwitchError(err, &w)

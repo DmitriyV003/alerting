@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"context"
 	"github.com/dmitriy/alerting/internal/server/applicationerrors"
 	"github.com/dmitriy/alerting/internal/server/model"
 	"github.com/dmitriy/alerting/internal/server/storage/commonstorage"
@@ -24,22 +25,22 @@ func New() *metricStorage {
 	return &metricStore
 }
 
-func (s *metricStorage) GetByNameAndType(name string, metricType string) (*model.Metric, error) {
+func (s *metricStorage) GetByNameAndType(ctx context.Context, name string, metricType string) (*model.Metric, error) {
 	metric, ok := s.metrics.Load(name)
 
 	if !ok {
 		return nil, applicationerrors.ErrNotFound
 	}
-	castedMetric := metric.(model.Metric)
+	castedMetric := metric.(*model.Metric)
 
 	if metricType == model.GaugeType || metricType == model.CounterType {
-		return &castedMetric, nil
+		return castedMetric, nil
 	}
 
 	return nil, applicationerrors.ErrUnknownType
 }
 
-func (s *metricStorage) GetAll() *[]model.Metric {
+func (s *metricStorage) GetAll(ctx context.Context) *[]model.Metric {
 	var metrics []model.Metric
 
 	s.metrics.Range(func(key, value interface{}) bool {
@@ -53,7 +54,7 @@ func (s *metricStorage) GetAll() *[]model.Metric {
 	return &metrics
 }
 
-func (s *metricStorage) UpdateMetric(name string, value string, metricType string) error {
+func (s *metricStorage) UpdateOrCreate(ctx context.Context, name string, value string, metricType string) error {
 	var metric interface{}
 
 	if metricType == model.GaugeType {
@@ -78,7 +79,7 @@ func (s *metricStorage) UpdateMetric(name string, value string, metricType strin
 		if !ok {
 			metric = model.NewCounter(name, val)
 		} else {
-			*metric.(model.Metric).IntValue += val
+			*metric.(*model.Metric).IntValue += val
 		}
 	} else {
 		log.Info("Invalid metric Type")
@@ -92,7 +93,7 @@ func (s *metricStorage) UpdateMetric(name string, value string, metricType strin
 	return nil
 }
 
-func (s *metricStorage) SaveAllMetricsData(metrics *[]model.Metric) {
+func (s *metricStorage) SaveAllMetricsData(ctx context.Context, metrics *[]model.Metric) {
 	for _, metric := range *metrics {
 		s.metrics.Store(metric.Name, metric)
 	}
