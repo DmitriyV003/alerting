@@ -93,7 +93,15 @@ func (s *metricStorage) UpdateOrCreate(ctx context.Context, name string, value s
 	return nil
 }
 
-func (s *metricStorage) SaveAllMetricsData(ctx context.Context, metrics *[]model.Metric) {
+func (s *metricStorage) SaveCollection(ctx context.Context, metrics *[]model.Metric) error {
+	for _, metric := range *metrics {
+		s.metrics.Store(metric.Name, metric)
+	}
+
+	return nil
+}
+
+func (s *metricStorage) RestoreCollection(ctx context.Context, metrics *[]model.Metric) {
 	for _, metric := range *metrics {
 		s.metrics.Store(metric.Name, metric)
 	}

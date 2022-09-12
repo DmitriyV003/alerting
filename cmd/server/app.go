@@ -37,6 +37,7 @@ func (app *App) routes() http.Handler {
 		FileURL:     app.conf.StoreFile,
 		DatabaseDsn: app.conf.DatabaseDsn,
 	}
+
 	store, err := storerFactory.Storage(nil)
 	if err != nil {
 		log.Fatal("unknown storage type: ", err)
@@ -48,6 +49,7 @@ func (app *App) routes() http.Handler {
 	getMetricValueByTypeAndNameHandler := handlers.NewGetMetricValueByTypeAndNameHandler(store)
 	getMetricByTypeAndNameHandler := handlers.NewGetMetricByTypeAndNameHandler(store, app.conf.Key)
 	pingHandler := handlers.NewPingHandler(app.pool, context.Background())
+	updateMetricsCollectionHandler := handlers.NewUpdateMetricsCollectionHandler(store)
 
 	restore, _ := strconv.ParseBool(app.conf.Restore)
 	fileSaver := service.NewFileSaver(app.conf.StoreFile, app.conf.StoreInterval, restore, store)
@@ -64,6 +66,7 @@ func (app *App) routes() http.Handler {
 	router.Post("/update/{type}/{name}/{value}", updateMetricHandler.Handle)
 	router.Post("/value", getMetricByTypeAndNameHandler.Handle)
 	router.Post("/update", updateMetricHandler.Handle)
+	router.Post("/updates", updateMetricsCollectionHandler.Handle)
 
 	router.Get("/ping", pingHandler.Handle)
 
@@ -99,6 +102,7 @@ func (app *App) connectToDB() (pool *pgxpool.Pool) {
 }
 
 func (app *App) migrate() {
+
 	//parsedDbUrl, _ := url.Parse(app.conf.DatabaseDsn)
 	//cmd := exec.Command("tern", "migrate", "--migrations", "./migrations")
 	//cmd.Env = append(cmd.Env, fmt.Sprintf("DATABASE=%s", strings.Trim(parsedDbUrl.Path, "/")))

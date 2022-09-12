@@ -180,6 +180,8 @@ func (s *metricStorage) UpdateOrCreate(ctx context.Context, name string, value s
 		val, err = strconv.ParseInt(value, 10, 64)
 		f := val.(int64)
 		intValue = &f
+	} else {
+		return applicationerrors.ErrUnknownType
 	}
 
 	if err != nil {
@@ -228,7 +230,7 @@ func (s *metricStorage) DeleteByNameAndType(ctx context.Context, name string, mT
 	return nil
 }
 
-func (s *metricStorage) SaveAllMetricsData(ctx context.Context, metrics *[]model.Metric) {
+func (s *metricStorage) RestoreCollection(ctx context.Context, metrics *[]model.Metric) {
 	var err error
 	for _, metric := range *metrics {
 		if metric.Type == model.GaugeType {
@@ -244,6 +246,56 @@ func (s *metricStorage) SaveAllMetricsData(ctx context.Context, metrics *[]model
 			}).Error("Unable to save metric from file")
 		}
 	}
+}
+
+func (s *metricStorage) SaveCollection(ctx context.Context, metrics *[]model.Metric) error {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"Error": err,
+		}).Error("Error to begin transaction")
+
+		return applicationerrors.ErrInternalServer
+	}
+
+	for _, metric := range *metrics {
+		if metric.Type == model.GaugeType {
+			err = s.UpdateOrCreate(ctx, metric.Name, fmt.Sprint(*metric.FloatValue), string(metric.Type))
+		} else if metric.Type == model.CounterType {
+			err = s.UpdateOrCreate(ctx, metric.Name, fmt.Sprint(*metric.IntValue), string(metric.Type))
+		} else {
+			err = tx.Rollback(ctx)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"Error": err.Error(),
+				}).Error("Unable to Rollback transaction")
+				return err
+			}
+			return applicationerrors.ErrInternalServer
+		}
+
+		if err != nil {
+			log.WithFields(log.Fields{
+				"Error": err.Error(),
+			}).Error("Unable to save metric collection")
+			err = tx.Rollback(ctx)
+			if err != nil {
+				log.WithFields(log.Fields{
+					"Error": err.Error(),
+				}).Error("Unable to Rollback transaction")
+			}
+			return err
+		}
+	}
+
+	if err = tx.Commit(ctx); err != nil {
+		log.WithFields(log.Fields{
+			"Error": err.Error(),
+		}).Error("Unable to Commit transaction")
+		return err
+	}
+
+	return nil
 }
 
 func (s *metricStorage) Emit(event string) {

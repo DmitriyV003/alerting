@@ -27,7 +27,7 @@ func TestUpdateMetricHandler_Handle(t *testing.T) {
 		}
 	}{
 		{
-			name: "test successfull update counter",
+			name: "test successful update counter",
 			args: struct {
 				_type string
 				name  string
@@ -38,7 +38,7 @@ func TestUpdateMetricHandler_Handle(t *testing.T) {
 			}{statusCode: 200},
 		},
 		{
-			name: "test successfull update gauge",
+			name: "test successful update gauge",
 			args: struct {
 				_type string
 				name  string
@@ -87,11 +87,11 @@ func TestUpdateMetricHandler_Handle(t *testing.T) {
 			router.Post("/update/{type}/{name}/{value}", handler.Handle)
 
 			if tt.want.statusCode == 200 {
-				mockStorage.EXPECT().UpdateMetric(context.Background(), tt.args.name, tt.args.value, tt.args._type).Times(1).Return(nil)
+				mockStorage.EXPECT().UpdateOrCreate(context.Background(), tt.args.name, tt.args.value, tt.args._type).Times(1).Return(nil)
 			} else if tt.want.statusCode == 501 {
-				mockStorage.EXPECT().UpdateMetric(context.Background(), tt.args.name, tt.args.value, tt.args._type).Times(1).Return(applicationerrors.ErrInvalidType)
+				mockStorage.EXPECT().UpdateOrCreate(context.Background(), tt.args.name, tt.args.value, tt.args._type).Times(1).Return(applicationerrors.ErrInvalidType)
 			} else if tt.want.statusCode == 400 {
-				mockStorage.EXPECT().UpdateMetric(context.Background(), tt.args.name, tt.args.value, tt.args._type).Times(1).Return(applicationerrors.ErrInvalidValue)
+				mockStorage.EXPECT().UpdateOrCreate(context.Background(), tt.args.name, tt.args.value, tt.args._type).Times(1).Return(applicationerrors.ErrInvalidValue)
 			}
 
 			url := fmt.Sprintf("http://localhost:8080/update/%s/%s/%s", tt.args._type, tt.args.name, fmt.Sprint(tt.args.value))
