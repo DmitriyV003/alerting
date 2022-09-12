@@ -50,7 +50,7 @@ func (f *FileSaver) Restore() {
 		return
 	}
 
-	f.store.SaveAllMetricsData(context.Background(), &metrics)
+	f.store.RestoreCollection(context.Background(), &metrics)
 	log.Info("Data restored from file")
 }
 

@@ -84,19 +84,33 @@ func (mr *MockMetricStorageMockRecorder) GetByNameAndType(ctx, name, metricType 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByNameAndType", reflect.TypeOf((*MockMetricStorage)(nil).GetByNameAndType), ctx, name, metricType)
 }
 
-// SaveAllMetricsData mocks base method.
-func (m *MockMetricStorage) SaveAllMetricsData(ctx context.Context, metrics *[]model.Metric) {
+// RestoreCollection mocks base method.
+func (m *MockMetricStorage) RestoreCollection(ctx context.Context, metrics *[]model.Metric) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SaveAllMetricsData", ctx, metrics)
+	m.ctrl.Call(m, "RestoreCollection", ctx, metrics)
 }
 
-// SaveAllMetricsData indicates an expected call of SaveAllMetricsData.
-func (mr *MockMetricStorageMockRecorder) SaveAllMetricsData(ctx, metrics interface{}) *gomock.Call {
+// RestoreCollection indicates an expected call of RestoreCollection.
+func (mr *MockMetricStorageMockRecorder) RestoreCollection(ctx, metrics interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveAllMetricsData", reflect.TypeOf((*MockMetricStorage)(nil).SaveAllMetricsData), ctx, metrics)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RestoreCollection", reflect.TypeOf((*MockMetricStorage)(nil).RestoreCollection), ctx, metrics)
 }
 
-// UpdateMetric mocks base method.
+// SaveCollection mocks base method.
+func (m *MockMetricStorage) SaveCollection(ctx context.Context, metrics *[]model.Metric) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SaveCollection", ctx, metrics)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SaveCollection indicates an expected call of SaveCollection.
+func (mr *MockMetricStorageMockRecorder) SaveCollection(ctx, metrics interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveCollection", reflect.TypeOf((*MockMetricStorage)(nil).SaveCollection), ctx, metrics)
+}
+
+// UpdateOrCreate mocks base method.
 func (m *MockMetricStorage) UpdateOrCreate(ctx context.Context, metric, value, metricType string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateOrCreate", ctx, metric, value, metricType)
@@ -104,8 +118,8 @@ func (m *MockMetricStorage) UpdateOrCreate(ctx context.Context, metric, value, m
 	return ret0
 }
 
-// UpdateMetric indicates an expected call of UpdateMetric.
-func (mr *MockMetricStorageMockRecorder) UpdateMetric(ctx, metric, value, metricType interface{}) *gomock.Call {
+// UpdateOrCreate indicates an expected call of UpdateOrCreate.
+func (mr *MockMetricStorageMockRecorder) UpdateOrCreate(ctx, metric, value, metricType interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOrCreate", reflect.TypeOf((*MockMetricStorage)(nil).UpdateOrCreate), ctx, metric, value, metricType)
 }
