@@ -63,7 +63,7 @@ func TestNew(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, New("fg"), "New()")
+			assert.Equalf(t, tt.want, NewMetricService("fg"), "NewMetricService()")
 		})
 	}
 }

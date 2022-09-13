@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"github.com/caarlos0/env/v6"
-	log "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 	"time"
 )
 
@@ -22,7 +22,7 @@ const defaultPollInterval = "2s"
 func (conf *Config) parseEnv() {
 	err := env.Parse(conf)
 	if err != nil {
-		log.Error("Unable to parse ENV: ", err)
+		log.Error().Err(err).Msg("Unable to parse ENV")
 	}
 
 	reportInterval, _ := time.ParseDuration(defaultReportInterval)

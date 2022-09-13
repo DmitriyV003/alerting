@@ -86,11 +86,11 @@ func (handler *UpdateMetricHandler) Handle(w http.ResponseWriter, r *http.Reques
 		"Hash":  calculatedHash,
 	}).Info("Updated metric!")
 
-	res, _ := json.Marshal(response{Hash: calculatedHash})
+	res, _ := json.Marshal(updateMetricResponse{Hash: calculatedHash})
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write(res)
 }
 
-type response struct {
+type updateMetricResponse struct {
 	Hash string `json:"hash,omitempty"`
 }
