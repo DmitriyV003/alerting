@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/dmitriy/alerting/internal/agent/models"
-	log "github.com/sirupsen/logrus"
+	"github.com/rs/zerolog/log"
 	"io"
 	"net/http"
 	"time"
@@ -29,78 +29,54 @@ func (sender *Sender) SendWithInterval(url string, metrics *models.Health, durat
 	for range ticker.C {
 		metrics.Metrics.Range(func(key, value interface{}) bool {
 			metric, _ := value.(models.Metric)
-			var metricValue interface{}
 
-			if metric.Type == models.GaugeType {
-				metricValue = *metric.FloatValue
-			} else if metric.Type == models.CounterType {
-				metricValue = *metric.IntValue
-			}
-
-			data, err := json.Marshal(metric)
-
-			if err != nil {
-				log.Error("Unknown error during json.Marshal: ", err)
-
-				return false
-			}
-
-			res, err := sender.sendRequest(url, data)
-
-			logFields := log.Fields{
-				"Name":  metric.Name,
-				"Type":  metric.Type,
-				"Value": metricValue,
-				"Hash":  metric.Hash,
-			}
-
-			if err != nil {
-				log.WithFields(logFields).Error("Error to send data: ", err)
-
-				return false
-			}
-
-			log.WithFields(logFields).WithFields(log.Fields{
-				"response body": res,
-			}).Info("Send metric data")
-
-			return true
+			_, err := sender.sendRequest(url, metric)
+			return err == nil
 		})
 	}
 }
 
-func (sender *Sender) sendRequest(url string, data []byte) (*senderResponse, error) {
-	request, _ := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(data))
-	request.Header.Add("Content-Type", "application/json")
-	res, err := sender.client.Do(request)
-
+func (sender *Sender) sendRequest(url string, data interface{}) (*senderResponse, error) {
+	byteData, err := json.Marshal(data)
 	if err != nil {
-		log.WithFields(log.Fields{
-			"StatusCode": res.StatusCode,
-			"Error":      err,
-		}).Error("Request fail")
+		log.Error().Err(err).Msg("Unknown error during json.Marshal")
 
 		return nil, err
 	}
 
-	log.WithFields(log.Fields{
-		"StatusCode": res.StatusCode,
-	}).Info("Request ended")
+	request, _ := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(byteData))
+	request.Header.Add("Content-Type", "application/json")
+	res, err := sender.client.Do(request)
+	if err != nil {
+		log.Warn().Fields(map[string]interface{}{
+			"StatusCode": res.StatusCode,
+			"Error":      err.Error(),
+			"URL":        url,
+			"Data":       data,
+			"Method":     "POST",
+		}).Msg("Request fail")
+
+		return nil, err
+	}
 
 	response := senderResponse{}
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		log.Error("Error to read body: ", err)
+		log.Error().Err(err).Msg("Error to read body")
 		return nil, err
 	}
 	err = json.Unmarshal(body, &response)
 	if err != nil {
-		log.Error("Error to Unmarshal response: ", err)
+		log.Error().Err(err).Msg("Error to Unmarshal response")
 		return nil, err
 	}
-	log.WithFields(log.Fields{
-		"Response": response,
-	}).Info("Got Response")
+	log.Info().Fields(map[string]interface{}{
+		"Response":   response,
+		"StatusCode": res.StatusCode,
+		"Method":     "POST",
+		"URL":        url,
+		"Data":       data,
+	}).Msg("Send Metric")
 
 	defer res.Body.Close()
 

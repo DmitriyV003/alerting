@@ -13,7 +13,7 @@ type MetricService struct {
 	Health models.Health
 }
 
-func New(key string) *MetricService {
+func NewMetricService(key string) *MetricService {
 	return &MetricService{Health: *models.NewHealth(key)}
 }
 
