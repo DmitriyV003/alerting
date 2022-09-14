@@ -88,8 +88,16 @@ func (sender *Sender) sendRequest(url string, data []byte) (*senderResponse, err
 	}).Info("Request ended")
 
 	response := senderResponse{}
-	body, _ := io.ReadAll(res.Body)
-	_ = json.Unmarshal(body, &response)
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		log.Error("Error to read body: ", err)
+		return nil, err
+	}
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		log.Error("Error to Unmarshal response: ", err)
+		return nil, err
+	}
 	log.WithFields(log.Fields{
 		"Response": response,
 	}).Info("Got Response")

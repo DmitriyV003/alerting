@@ -81,21 +81,21 @@ func (app *App) connectToDB() (pool *pgxpool.Pool) {
 	if app.conf.DatabaseDsn == "" {
 		log.Info("Database URl not provided")
 		return nil
-	} else {
-		var err error
-		conf, err := pgxpool.ParseConfig(app.conf.DatabaseDsn)
-		if err != nil {
-			log.Error("Unable to parse Database config: ", err)
-			return
-		}
-		conf.ConnConfig.LogLevel = 5
-		conf.ConnConfig.Logger = logrusadapter.NewLogger(log.New())
-		pool, err = pgxpool.ConnectConfig(context.Background(), conf)
+	}
 
-		if err != nil {
-			log.Error("Unable to connect to database: ", err)
-			return
-		}
+	var err error
+	conf, err := pgxpool.ParseConfig(app.conf.DatabaseDsn)
+	if err != nil {
+		log.Error("Unable to parse Database config: ", err)
+		return
+	}
+	conf.ConnConfig.LogLevel = 5
+	conf.ConnConfig.Logger = logrusadapter.NewLogger(log.New())
+	pool, err = pgxpool.ConnectConfig(context.Background(), conf)
+
+	if err != nil {
+		log.Error("Unable to connect to database: ", err)
+		return
 	}
 
 	return pool
@@ -125,6 +125,7 @@ func (app *App) migrate() {
 	_, err := app.pool.Query(context.Background(), sql)
 	if err != nil {
 		log.Error("Error during migration: ", err)
+		return
 	}
 
 	log.Info("Migrating: ", sql)

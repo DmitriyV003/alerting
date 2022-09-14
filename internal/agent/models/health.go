@@ -45,24 +45,34 @@ type Health struct {
 
 func (h *Health) Store(id string, metricType MetricType, value string) {
 	var metric interface{}
-	if metricType == CounterType {
-		val, err := strconv.ParseInt(value, 10, 64)
-		if err != nil {
-			log.Error("Unable to parse value: ", err)
+	switch metricType {
+	case GaugeType:
+		{
+			val, err := strconv.ParseFloat(value, 64)
+			if err != nil {
+				log.Error("Unable to parse value: ", err)
+				return
+			}
+			hash := h.Hasher.Hash(fmt.Sprintf("%s:%s:%f", id, metricType, val))
+
+			metric = NewGauge(id, val, hash)
+		}
+	case CounterType:
+		{
+			val, err := strconv.ParseInt(value, 10, 64)
+			if err != nil {
+				log.Error("Unable to parse value: ", err)
+				return
+			}
+			hash := h.Hasher.Hash(fmt.Sprintf("%s:%s:%d", id, metricType, val))
+
+			metric = NewCounter(id, val, hash)
+		}
+	default:
+		{
+			log.Error("Unknown Metric Type")
 			return
 		}
-		hash := h.Hasher.Hash(fmt.Sprintf("%s:%s:%d", id, metricType, val))
-
-		metric = NewCounter(id, val, hash)
-	} else if metricType == GaugeType {
-		val, err := strconv.ParseFloat(value, 64)
-		if err != nil {
-			log.Error("Unable to parse value: ", err)
-			return
-		}
-		hash := h.Hasher.Hash(fmt.Sprintf("%s:%s:%f", id, metricType, val))
-
-		metric = NewGauge(id, val, hash)
 	}
 
 	h.Metrics.Store(id, metric)
