@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 )
 
 type Hasher struct {
@@ -30,8 +31,16 @@ func (h *Hasher) Hash(str string) string {
 }
 
 func (h *Hasher) IsEqual(hash1 string, hash2 string) bool {
-	decodedHash1, _ := hex.DecodeString(hash1)
-	decodedHash2, _ := hex.DecodeString(hash2)
+	decodedHash1, err := hex.DecodeString(hash1)
+	if err != nil {
+		log.Error("Unable to decode hash: ", err)
+		return false
+	}
+	decodedHash2, err := hex.DecodeString(hash2)
+	if err != nil {
+		log.Error("Unable to decode hash: ", err)
+		return false
+	}
 	isHashEqual := hmac.Equal(decodedHash1, decodedHash2)
 
 	return isHashEqual

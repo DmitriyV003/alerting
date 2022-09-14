@@ -27,11 +27,8 @@ func (app *App) run() {
 	ticker := time.NewTicker(time.Second)
 	clientPing := http.Client{}
 	for range ticker.C {
-		request, _ := http.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/heartbeat", app.conf.Address), nil)
-		res, err := clientPing.Do(request)
-		log.Info("Ping Server: ", err)
-		if err == nil && res != nil && res.StatusCode == 200 {
-			res.Body.Close()
+		err := app.ping(&clientPing)
+		if err == nil {
 			ticker.Stop()
 			break
 		}
@@ -43,4 +40,20 @@ func (app *App) run() {
 	go sender.SendWithInterval(fmt.Sprintf("http://%s/update", app.conf.Address), &metricService.Health, app.conf.ReportInterval)
 
 	select {}
+}
+
+func (app *App) ping(client *http.Client) error {
+	request, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/heartbeat", app.conf.Address), nil)
+	if err != nil {
+		log.Error("Request failed: ", err)
+		return err
+	}
+	res, err := client.Do(request)
+	log.Info("Ping Server: ", err)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	return nil
 }
