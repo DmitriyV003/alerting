@@ -3,6 +3,9 @@ package service
 import (
 	"fmt"
 	"github.com/dmitriy/alerting/internal/agent/models"
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/mem"
+	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"runtime"
 	"strconv"
@@ -61,11 +64,38 @@ func (metricService *MetricService) gatherMetrics() {
 	metricService.Health.Store("RandomValue", models.GaugeType, fmt.Sprint(rand.Float64()))
 }
 
+func (metricService *MetricService) gatherAdditionalMetrics() {
+	virtualMemory, err := mem.VirtualMemory()
+	if err != nil {
+		log.Error("Unable to gather virtual memory metrics: ", err)
+		return
+	}
+
+	cpuUsage, err := cpu.Percent(3*time.Second, false)
+	if err != nil {
+		log.Error("Unable to gather CPU usage: ", err)
+		return
+	}
+
+	metricService.Health.Store("TotalMemory", models.GaugeType, strconv.FormatUint(virtualMemory.Total, 10))
+	metricService.Health.Store("FreeMemory", models.GaugeType, strconv.FormatUint(virtualMemory.Free, 10))
+	metricService.Health.Store("CPUutilization1", models.GaugeType, strconv.FormatFloat(cpuUsage[0], 'f', 6, 64))
+}
+
 func (metricService *MetricService) GatherMetricsByInterval(duration time.Duration) {
 	ticker := time.NewTicker(duration)
 	defer ticker.Stop()
 
 	for range ticker.C {
 		metricService.gatherMetrics()
+	}
+}
+
+func (metricService *MetricService) GatherAdditionalMetricsByInterval(duration time.Duration) {
+	ticker := time.NewTicker(duration)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		metricService.gatherAdditionalMetrics()
 	}
 }
