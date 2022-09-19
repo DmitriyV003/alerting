@@ -21,6 +21,7 @@ func (app *App) run() {
 	pingService.Ping(fmt.Sprintf("http://%s/heartbeat", app.conf.Address))
 
 	go metricService.GatherMetricsByInterval(app.conf.PollInterval)
+	go metricService.GatherAdditionalMetricsByInterval(app.conf.PollInterval)
 
 	sender := client.New()
 	go sender.SendWithInterval(fmt.Sprintf("http://%s/update", app.conf.Address), &metricService.Health, app.conf.ReportInterval)
