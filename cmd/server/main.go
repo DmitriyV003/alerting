@@ -4,6 +4,7 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	log "github.com/sirupsen/logrus"
 	"net/http"
+	_ "net/http/pprof"
 )
 
 type App struct {
@@ -26,6 +27,7 @@ func main() {
 		Addr:    app.conf.Address,
 		Handler: app.routes(),
 	}
+	go http.ListenAndServe(":8082", nil)
 	err := srv.ListenAndServe()
 	if err != nil {
 		log.Panic(err)
