@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"sync"
 	"testing"
+	"time"
 )
 
 func TestMetricService_gatherMetrics(t *testing.T) {
@@ -43,6 +44,24 @@ func TestMetricService_gatherMetrics(t *testing.T) {
 			assert.Equal(t, counterMetricCasted.Name, "PollCount")
 		})
 	}
+}
+
+func ExampleMetricService_GatherMetricsByInterval() {
+	metricService := NewMetricService("somesecretkey")
+	d, err := time.ParseDuration("5s")
+	if err != nil {
+		return
+	}
+	go metricService.GatherMetricsByInterval(d)
+}
+
+func ExampleMetricService_GatherAdditionalMetricsByInterval() {
+	metricService := NewMetricService("somesecretkey")
+	d, err := time.ParseDuration("5s")
+	if err != nil {
+		return
+	}
+	go metricService.GatherAdditionalMetricsByInterval(d)
 }
 
 func TestNew(t *testing.T) {
