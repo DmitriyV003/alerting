@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/dmitriy/alerting/internal/agent/client"
 	"github.com/dmitriy/alerting/internal/agent/service"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"os"
 )
 
 func (app *App) config() {

@@ -2,11 +2,12 @@ package handlers
 
 import (
 	"context"
+	"html/template"
+	"net/http"
+
 	"github.com/dmitriy/alerting/internal/server/applicationerrors"
 	"github.com/dmitriy/alerting/internal/server/model"
 	"github.com/dmitriy/alerting/internal/server/storage"
-	"html/template"
-	"net/http"
 )
 
 type GetAllMetricHandler struct {

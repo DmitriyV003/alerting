@@ -2,14 +2,15 @@ package service
 
 import (
 	"fmt"
-	"github.com/dmitriy/alerting/internal/agent/models"
-	"github.com/shirou/gopsutil/v3/cpu"
-	"github.com/shirou/gopsutil/v3/mem"
-	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"runtime"
 	"strconv"
 	"time"
+
+	"github.com/dmitriy/alerting/internal/agent/models"
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/mem"
+	log "github.com/sirupsen/logrus"
 )
 
 type MetricService struct {

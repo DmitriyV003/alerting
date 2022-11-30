@@ -2,12 +2,13 @@ package memory
 
 import (
 	"context"
+	"strconv"
+	"sync"
+
 	"github.com/dmitriy/alerting/internal/server/applicationerrors"
 	"github.com/dmitriy/alerting/internal/server/model"
 	"github.com/dmitriy/alerting/internal/server/storage/commonstorage"
 	log "github.com/sirupsen/logrus"
-	"strconv"
-	"sync"
 )
 
 type metricStorage struct {

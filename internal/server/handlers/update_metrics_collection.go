@@ -3,11 +3,12 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+
 	"github.com/dmitriy/alerting/internal/server/applicationerrors"
 	"github.com/dmitriy/alerting/internal/server/model"
 	"github.com/dmitriy/alerting/internal/server/storage"
 	log "github.com/sirupsen/logrus"
-	"net/http"
 )
 
 type UpdateMetricsCollectionHandler struct {
