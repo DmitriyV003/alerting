@@ -3,11 +3,12 @@ package client
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/dmitriy/alerting/internal/agent/models"
-	"github.com/rs/zerolog/log"
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/dmitriy/alerting/internal/agent/models"
+	"github.com/rs/zerolog/log"
 )
 
 type Sender struct {

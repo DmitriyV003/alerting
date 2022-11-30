@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+
 	"github.com/dmitriy/alerting/internal/server/model"
 )
 

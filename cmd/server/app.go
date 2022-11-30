@@ -2,6 +2,9 @@ package main
 
 import (
 	"context"
+	"net/http"
+	"strconv"
+
 	"github.com/dmitriy/alerting/internal/hasher"
 	"github.com/dmitriy/alerting/internal/server/handlers"
 	"github.com/dmitriy/alerting/internal/server/service"
@@ -11,8 +14,6 @@ import (
 	"github.com/jackc/pgx/v4/log/logrusadapter"
 	"github.com/jackc/pgx/v4/pgxpool"
 	log "github.com/sirupsen/logrus"
-	"net/http"
-	"strconv"
 )
 
 func (app *App) routes() http.Handler {

@@ -1,9 +1,10 @@
 package main
 
 import (
+	"net/http"
+
 	"github.com/jackc/pgx/v4/pgxpool"
 	log "github.com/sirupsen/logrus"
-	"net/http"
 )
 
 type App struct {

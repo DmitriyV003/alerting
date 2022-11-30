@@ -1,11 +1,12 @@
 package service
 
 import (
+	"sync"
+	"testing"
+
 	"github.com/dmitriy/alerting/internal/agent/models"
 	"github.com/dmitriy/alerting/internal/hasher"
 	"github.com/stretchr/testify/assert"
-	"sync"
-	"testing"
 )
 
 func TestMetricService_gatherMetrics(t *testing.T) {

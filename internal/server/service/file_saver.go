@@ -3,13 +3,14 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"github.com/dmitriy/alerting/internal/server/model"
-	"github.com/dmitriy/alerting/internal/server/storage"
-	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/dmitriy/alerting/internal/server/model"
+	"github.com/dmitriy/alerting/internal/server/storage"
+	log "github.com/sirupsen/logrus"
 )
 
 type FileSaver struct {

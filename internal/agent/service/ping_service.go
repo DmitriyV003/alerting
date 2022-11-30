@@ -1,9 +1,10 @@
 package service
 
 import (
-	"github.com/rs/zerolog/log"
 	"net/http"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 type PingService struct {

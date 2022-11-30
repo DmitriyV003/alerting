@@ -2,10 +2,11 @@ package models
 
 import (
 	"fmt"
-	"github.com/dmitriy/alerting/internal/hasher"
-	log "github.com/sirupsen/logrus"
 	"strconv"
 	"sync"
+
+	"github.com/dmitriy/alerting/internal/hasher"
+	log "github.com/sirupsen/logrus"
 )
 
 const CounterType = "counter"

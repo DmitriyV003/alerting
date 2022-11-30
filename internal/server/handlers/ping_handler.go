@@ -2,10 +2,11 @@ package handlers
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/dmitriy/alerting/internal/server/applicationerrors"
 	"github.com/jackc/pgx/v4/pgxpool"
 	log "github.com/sirupsen/logrus"
-	"net/http"
 )
 
 type PingHandler struct {
