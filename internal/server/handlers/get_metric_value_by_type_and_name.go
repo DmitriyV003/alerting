@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	"github.com/dmitriy/alerting/internal/agent/models"
 	"github.com/dmitriy/alerting/internal/server/applicationerrors"
 	"github.com/dmitriy/alerting/internal/server/storage"
 	"github.com/go-chi/chi/v5"
 	log "github.com/sirupsen/logrus"
-	"net/http"
 )
 
 type GetMetricValueByTypeAndNameHandler struct {

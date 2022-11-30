@@ -2,8 +2,9 @@ package applicationerrors
 
 import (
 	"errors"
-	log "github.com/sirupsen/logrus"
 	"net/http"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var ErrNotFound = errors.New("not found")

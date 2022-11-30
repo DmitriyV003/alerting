@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/rs/zerolog/log"
 	"net/http"
 	_ "net/http/pprof"

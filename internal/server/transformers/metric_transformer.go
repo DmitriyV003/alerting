@@ -2,6 +2,7 @@ package transformers
 
 import (
 	"fmt"
+
 	"github.com/dmitriy/alerting/internal/hasher"
 	"github.com/dmitriy/alerting/internal/server/model"
 )
