@@ -24,6 +24,7 @@ func NewGetAllMetricHandler(store storage.MetricStorage) *GetAllMetricHandler {
 	}
 }
 
+// Handle Get all Metrics
 func (h *GetAllMetricHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	metrics := h.storage.GetAll(context.Background())
 	viewMetrics := viewData{Metrics: *metrics}

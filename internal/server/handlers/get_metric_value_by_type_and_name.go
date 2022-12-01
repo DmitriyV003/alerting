@@ -23,6 +23,7 @@ func NewGetMetricValueByTypeAndNameHandler(store storage.MetricStorage) *GetMetr
 	}
 }
 
+// Handle Get metric value by type and name
 func (h *GetMetricValueByTypeAndNameHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	name := chi.URLParam(r, "name")
 	metricType := chi.URLParam(r, "type")

@@ -83,6 +83,7 @@ func (metricService *MetricService) gatherAdditionalMetrics() {
 	metricService.Health.Store("CPUutilization1", models.GaugeType, strconv.FormatFloat(cpuUsage[0], 'f', 6, 64))
 }
 
+// GatherMetricsByInterval Gather OS metric with given interval
 func (metricService *MetricService) GatherMetricsByInterval(duration time.Duration) {
 	ticker := time.NewTicker(duration)
 	defer ticker.Stop()
@@ -92,6 +93,7 @@ func (metricService *MetricService) GatherMetricsByInterval(duration time.Durati
 	}
 }
 
+// GatherAdditionalMetricsByInterval Gather additional metrics with interval
 func (metricService *MetricService) GatherAdditionalMetricsByInterval(duration time.Duration) {
 	ticker := time.NewTicker(duration)
 	defer ticker.Stop()
