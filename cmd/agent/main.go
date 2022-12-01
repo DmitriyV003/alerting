@@ -3,9 +3,10 @@ package main
 import (
 	"fmt"
 
-	"github.com/rs/zerolog/log"
 	"net/http"
 	_ "net/http/pprof"
+
+	"github.com/rs/zerolog/log"
 )
 
 type App struct {

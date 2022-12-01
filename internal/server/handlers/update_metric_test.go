@@ -15,7 +15,6 @@ import (
 )
 
 func TestUpdateMetricHandler_Handle(t *testing.T) {
-
 	tests := []struct {
 		name string
 		args struct {

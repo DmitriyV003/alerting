@@ -16,6 +16,7 @@ type StorerFactory struct {
 	DatabaseDsn string
 }
 
+// Storage Get StorageImplementation by storageType
 func (sf *StorerFactory) Storage(st *storageType) (MetricStorage, error) {
 	storerType := sf.chooseType(st)
 	if storerType == "database" {
