@@ -14,6 +14,7 @@ func NewPingService() *PingService {
 	return &PingService{}
 }
 
+// Ping check server availability
 func (s *PingService) Ping(address string) {
 	ticker := time.NewTicker(time.Second)
 	clientPing := http.Client{}

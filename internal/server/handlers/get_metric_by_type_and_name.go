@@ -29,6 +29,7 @@ func NewGetMetricByTypeAndNameHandler(store storage.MetricStorage, key string) *
 	}
 }
 
+// Handle Get metric by type and name
 func (h *GetMetricByTypeAndNameHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	var name string
 	var metricReq metricRequest

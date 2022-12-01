@@ -21,6 +21,7 @@ func NewPingHandler(pool *pgxpool.Pool, ctx context.Context) *PingHandler {
 	}
 }
 
+// Handle Check service health
 func (h *PingHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	if h.pool == nil {
 		log.Error("Database not accessable")

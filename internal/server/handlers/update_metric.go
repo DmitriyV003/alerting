@@ -29,6 +29,7 @@ func NewUpdateMetricHandler(store storage.MetricStorage, hasher *hasher.Hasher) 
 	}
 }
 
+// Handle Update metric with given params
 func (handler *UpdateMetricHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	name := chi.URLParam(r, "name")
 	metricType := chi.URLParam(r, "type")
