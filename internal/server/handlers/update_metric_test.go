@@ -97,11 +97,8 @@ func TestUpdateMetricHandler_Handle(t *testing.T) {
 
 			url := fmt.Sprintf("http://localhost:8080/update/%s/%s/%s", tt.args._type, tt.args.name, fmt.Sprint(tt.args.value))
 			newRequest, err := http.NewRequest(http.MethodPost, url, nil)
+			assert.NoError(t, err)
 			rr := httptest.NewRecorder()
-
-			if err != nil {
-				return
-			}
 
 			router.ServeHTTP(rr, newRequest)
 			res := rr.Result()
@@ -110,5 +107,29 @@ func TestUpdateMetricHandler_Handle(t *testing.T) {
 
 			assert.Equal(t, tt.want.statusCode, res.StatusCode)
 		})
+	}
+}
+
+func BenchmarkUpdateMetricHandler_Handle(b *testing.B) {
+	router := chi.NewRouter()
+	ctrl := gomock.NewController(b)
+	mockStorage := mocks.NewMockMetricStorage(ctrl)
+	defer ctrl.Finish()
+	handler := &UpdateMetricHandler{
+		storage: mockStorage,
+	}
+	router.Post("/update/{type}/{name}/{value}", handler.Handle)
+
+	for i := 0; i < b.N; i++ {
+		mockStorage.EXPECT().UpdateOrCreate(context.Background(), "testCounter", "100", "counter").Return(nil)
+		url := fmt.Sprintf("http://localhost:8080/update/%s/%s/%s", "counter", "testCounter", "100")
+		newRequest, err := http.NewRequest(http.MethodPost, url, nil)
+		assert.NoError(b, err)
+		rr := httptest.NewRecorder()
+
+		router.ServeHTTP(rr, newRequest)
+		res := rr.Result()
+
+		res.Body.Close()
 	}
 }

@@ -47,6 +47,20 @@ func TestMetricService_gatherMetrics(t *testing.T) {
 	}
 }
 
+func BenchmarkMetricService_GatherMetricsByInterval(b *testing.B) {
+	h := models.Health{
+		Metrics: &sync.Map{},
+		Hasher:  hasher.New("fg"),
+	}
+	metricService := &MetricService{
+		Health: h,
+	}
+
+	for i := 0; i < b.N; i++ {
+		metricService.gatherMetrics()
+	}
+}
+
 func ExampleMetricService_GatherMetricsByInterval() {
 	metricService := NewMetricService("somesecretkey")
 	d, err := time.ParseDuration("5s")
