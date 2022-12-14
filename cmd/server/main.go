@@ -15,22 +15,24 @@ type App struct {
 }
 
 var (
-	BuildVersion string
-	BuildTime    string
-	BuildCommit  string
+	buildVersion string
+	buildTime    string
+	buildCommit  string
 )
 
+// go run -ldflags "-X main.buildVersion=v1.0.0 -X 'main.buildTime=$(date +'%Y/%m/%d %H:%M:%S')' -X 'main.buildCommit=$(git rev-parse HEAD)'" cmd/server/main.go
+
 func main() {
-	if BuildVersion == "" {
-		BuildVersion = "N/A"
+	if buildVersion == "" {
+		buildVersion = "N/A"
 	}
-	if BuildTime == "" {
-		BuildTime = "N/A"
+	if buildTime == "" {
+		buildTime = "N/A"
 	}
-	if BuildCommit == "" {
-		BuildCommit = "N/A"
+	if buildCommit == "" {
+		buildCommit = "N/A"
 	}
-	log.Printf("Build version=%s, Build date=%s\n, Build commit=%s\n", BuildVersion, BuildTime, BuildCommit)
+	log.Printf("Build version=%s, Build date=%s\n, Build commit=%s\n", buildVersion, buildTime, buildCommit)
 	app := App{
 		conf: Config{},
 	}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"go/ast"
+
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/multichecker"
 	"golang.org/x/tools/go/analysis/passes/printf"
@@ -23,8 +24,10 @@ func main() {
 							return false
 						}
 					case *ast.SelectorExpr:
-						if x.Sel.Name == "Exit" {
-							pass.Reportf(x.Pos(), "Called os.Exit() in main")
+						if ident, ok := x.X.(*ast.Ident); ok {
+							if ident.Name == "os" && x.Sel.Name == "Exit" {
+								pass.Reportf(ident.NamePos, "os.Exit is called in main package")
+							}
 						}
 					}
 					return true
