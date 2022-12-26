@@ -1,12 +1,24 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
+	"os"
 	"time"
 
 	"github.com/caarlos0/env/v6"
+	"github.com/dmitriy/alerting/internal/helpers"
 	log "github.com/sirupsen/logrus"
 )
+
+type JSONConfig struct {
+	Address       string           `json:"address"`
+	StoreInterval helpers.Duration `json:"store_interval"`
+	StoreFile     string           `json:"store_file"`
+	Restore       string           `json:"restore"`
+	Key           string           `json:"key"`
+	DatabaseDsn   string           `json:"database_dsn"`
+}
 
 type Config struct {
 	Address       string        `env:"ADDRESS"`
@@ -17,6 +29,10 @@ type Config struct {
 	DatabaseDsn   string        `env:"DATABASE_DSN"`
 }
 
+type configFile struct {
+	Path string `env:"CONFIG"`
+}
+
 const defaultAddress = "localhost:8080"
 const defaultStoreInterval = "300s"
 const defaultStoreFile = "/tmp/devops-metrics-db.json"
@@ -25,7 +41,25 @@ const defaultKey = ""
 const defaultDatabaseDsn = ""
 
 func (conf *Config) parseEnv() {
-	err := env.Parse(conf)
+	var jsonConfig JSONConfig
+	var confFile configFile
+	err := env.Parse(&confFile)
+	if err != nil {
+		log.Warn("Unable to parse path to config from ENV: ", err)
+	}
+	confPath := flag.String("config", "/home/dmitriy/GolandProjects/alerting/cmd/agent/config.json", "Config file")
+	if confPath != nil && *confPath != "" {
+		confFile.Path = *confPath
+	}
+
+	if confFile.Path != "" {
+		err := initConfigFromJSONFile(confFile.Path, &jsonConfig)
+		if err != nil {
+			log.Warnf("Unable to parse configFile: %s", confFile.Path)
+		}
+	}
+
+	err = env.Parse(conf)
 	if err != nil {
 		log.Error("Unable to parse ENV: ", err)
 	}
@@ -68,4 +102,17 @@ func (conf *Config) parseEnv() {
 		"Key":           conf.Key,
 		"DatabaseDsn":   conf.DatabaseDsn,
 	}).Info("Environment variables")
+}
+
+func initConfigFromJSONFile(file string, config *JSONConfig) error {
+	jsonFile, err := os.ReadFile(file)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(jsonFile, config)
+	log.Print("FROM FILE ", config)
+	if err != nil {
+		return err
+	}
+	return nil
 }
