@@ -2,22 +2,26 @@ package client
 
 import (
 	"bytes"
+	"crypto/rsa"
 	"encoding/json"
 	"io"
 	"net/http"
 	"time"
 
 	"github.com/dmitriy/alerting/internal/agent/models"
+	"github.com/dmitriy/alerting/internal/helpers"
 	"github.com/rs/zerolog/log"
 )
 
 type Sender struct {
-	client http.Client
+	client    http.Client
+	publicKey *rsa.PublicKey
 }
 
-func New() Sender {
+func New(publicKey *rsa.PublicKey) Sender {
 	sender := Sender{
-		client: http.Client{},
+		client:    http.Client{},
+		publicKey: publicKey,
 	}
 	sender.client.Timeout = 1 * time.Second
 
@@ -43,6 +47,13 @@ func (sender *Sender) sendRequest(url string, data interface{}) (*senderResponse
 		log.Error().Err(err).Msg("Unknown error during json.Marshal")
 
 		return nil, err
+	}
+
+	if sender.publicKey != nil {
+		byteData, err = helpers.Encrypt(sender.publicKey, byteData)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	request, _ := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(byteData))
