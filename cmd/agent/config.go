@@ -15,7 +15,8 @@ type JSONConfig struct {
 	Address        string           `json:"address"`
 	ReportInterval helpers.Duration `json:"report_interval"`
 	PollInterval   helpers.Duration `json:"poll_interval"`
-	Key            string           `json:"crypto_key"`
+	Key            string           `json:"key"`
+	PublicKey      string           `json:"crypto_key"`
 }
 
 type Config struct {
@@ -23,6 +24,7 @@ type Config struct {
 	ReportInterval time.Duration `env:"REPORT_INTERVAL"`
 	PollInterval   time.Duration `env:"POLL_INTERVAL"`
 	Key            string        `env:"KEY"`
+	PublicKey      string        `env:"CRYPTO_KEY"`
 }
 
 type configFile struct {
@@ -57,6 +59,7 @@ func (conf *Config) parseEnv() {
 	conf.Address = jsonConfig.Address
 	conf.ReportInterval = jsonConfig.ReportInterval.Duration
 	conf.PollInterval = jsonConfig.PollInterval.Duration
+	conf.PublicKey = jsonConfig.PublicKey
 
 	err = env.Parse(conf)
 	if err != nil {
@@ -77,6 +80,7 @@ func (conf *Config) parseEnv() {
 	key := flag.String("k", defaultKey, "Key for hashing")
 	reportIntervalFlag := flag.Duration("r", reportInterval, "Report Interval")
 	pollIntervalFlag := flag.Duration("p", pollInterval, "Poll Interval")
+	publicKey := flag.String("crypto-key", "", "Public key")
 
 	flag.PrintDefaults()
 	flag.Parse()
@@ -92,6 +96,9 @@ func (conf *Config) parseEnv() {
 	}
 	if conf.PollInterval.String() == "0s" {
 		conf.PollInterval = *pollIntervalFlag
+	}
+	if conf.PublicKey == "" {
+		conf.PublicKey = *publicKey
 	}
 
 }

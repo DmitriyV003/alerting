@@ -2,8 +2,12 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
+
+	"github.com/dmitriy/alerting/internal/helpers"
+	middleware2 "github.com/dmitriy/alerting/internal/server/middleware"
 
 	"github.com/dmitriy/alerting/internal/hasher"
 	"github.com/dmitriy/alerting/internal/server/handlers"
@@ -25,12 +29,18 @@ func (app *App) routes() http.Handler {
 		app.migrate()
 	}
 
+	privateKey, err := helpers.ImportPrivateKeyFromFile(app.conf.PrivateKey)
+	if err != nil {
+		log.Error(fmt.Errorf("error to get private key from file: %w", err))
+	}
+
 	router.Use(middleware.RequestID)
 	router.Use(middleware.RealIP)
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.StripSlashes)
 	router.Use(middleware.Compress(5))
+	router.Use(middleware2.Decrypt(privateKey))
 	router.Use(middleware.Heartbeat("/heartbeat"))
 
 	storerFactory := storage.StorerFactory{

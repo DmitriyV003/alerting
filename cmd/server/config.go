@@ -18,6 +18,7 @@ type JSONConfig struct {
 	Restore       string           `json:"restore"`
 	Key           string           `json:"key"`
 	DatabaseDsn   string           `json:"database_dsn"`
+	PrivateKey    string           `json:"crypto_key"`
 }
 
 type Config struct {
@@ -27,6 +28,7 @@ type Config struct {
 	Restore       string        `env:"RESTORE"`
 	Key           string        `env:"KEY"`
 	DatabaseDsn   string        `env:"DATABASE_DSN"`
+	PrivateKey    string        `env:"CRYPTO_KEY"`
 }
 
 type configFile struct {
@@ -59,6 +61,14 @@ func (conf *Config) parseEnv() {
 		}
 	}
 
+	conf.Address = jsonConfig.Address
+	conf.StoreInterval = jsonConfig.StoreInterval.Duration
+	conf.StoreFile = jsonConfig.StoreFile
+	conf.Restore = jsonConfig.Restore
+	conf.Key = jsonConfig.Key
+	conf.DatabaseDsn = jsonConfig.DatabaseDsn
+	conf.PrivateKey = jsonConfig.PrivateKey
+
 	err = env.Parse(conf)
 	if err != nil {
 		log.Error("Unable to parse ENV: ", err)
@@ -72,6 +82,7 @@ func (conf *Config) parseEnv() {
 	restore := flag.String("r", defaultRestore, "Restore data from file on restart")
 	key := flag.String("k", defaultKey, "Key for hashing")
 	databaseDsn := flag.String("d", defaultDatabaseDsn, "connection string to database")
+	privateKey := flag.String("crypto-key", "", "Private key")
 	flag.PrintDefaults()
 	flag.Parse()
 
@@ -92,6 +103,9 @@ func (conf *Config) parseEnv() {
 	}
 	if conf.DatabaseDsn == "" {
 		conf.DatabaseDsn = *databaseDsn
+	}
+	if conf.PrivateKey == "" {
+		conf.PrivateKey = *privateKey
 	}
 
 	log.WithFields(log.Fields{
