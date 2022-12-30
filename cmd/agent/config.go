@@ -43,7 +43,7 @@ func (conf *Config) parseEnv() {
 	if err != nil {
 		log.Warn().Err(err).Msg("Unable to parse path to config from ENV")
 	}
-	confPath := flag.String("config", "/home/dmitriy/GolandProjects/alerting/cmd/agent/config.json", "Config file")
+	confPath := flag.String("config", "", "Config file")
 	if confPath != nil && *confPath != "" {
 		confFile.Path = *confPath
 	}
@@ -60,11 +60,6 @@ func (conf *Config) parseEnv() {
 	conf.ReportInterval = jsonConfig.ReportInterval.Duration
 	conf.PollInterval = jsonConfig.PollInterval.Duration
 	conf.PublicKey = jsonConfig.PublicKey
-
-	err = env.Parse(conf)
-	if err != nil {
-		log.Warn().Err(err).Msg("Unable to parse ENV")
-	}
 
 	reportInterval, err := time.ParseDuration(defaultReportInterval)
 	if err != nil {
@@ -85,22 +80,26 @@ func (conf *Config) parseEnv() {
 	flag.PrintDefaults()
 	flag.Parse()
 
-	if conf.Address == "" {
+	if *address != "" {
 		conf.Address = *address
 	}
-	if conf.Key == "" {
+	if *key != "" {
 		conf.Key = *key
 	}
-	if conf.ReportInterval.String() == "0s" {
+	if (*reportIntervalFlag).String() != "0s" {
 		conf.ReportInterval = *reportIntervalFlag
 	}
-	if conf.PollInterval.String() == "0s" {
+	if (*pollIntervalFlag).String() != "0s" {
 		conf.PollInterval = *pollIntervalFlag
 	}
-	if conf.PublicKey == "" {
+	if *publicKey != "" {
 		conf.PublicKey = *publicKey
 	}
 
+	err = env.Parse(conf)
+	if err != nil {
+		log.Warn().Err(err).Msg("Unable to parse ENV")
+	}
 }
 
 func initConfigFromJSONFile(file string, config *JSONConfig) error {
@@ -110,9 +109,6 @@ func initConfigFromJSONFile(file string, config *JSONConfig) error {
 	}
 	err = json.Unmarshal(jsonFile, config)
 	log.Print("FROM FILE ", config)
-	if err != nil {
-		return err
-	}
 	if err != nil {
 		return err
 	}

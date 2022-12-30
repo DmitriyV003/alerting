@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"sync"
 	"testing"
 	"time"
@@ -67,7 +68,7 @@ func ExampleMetricService_GatherMetricsByInterval() {
 	if err != nil {
 		return
 	}
-	go metricService.GatherMetricsByInterval(d)
+	go metricService.GatherMetricsByInterval(context.Background(), d)
 }
 
 func ExampleMetricService_GatherAdditionalMetricsByInterval() {
@@ -76,7 +77,7 @@ func ExampleMetricService_GatherAdditionalMetricsByInterval() {
 	if err != nil {
 		return
 	}
-	go metricService.GatherAdditionalMetricsByInterval(d)
+	go metricService.GatherAdditionalMetricsByInterval(context.Background(), d)
 }
 
 func TestNew(t *testing.T) {

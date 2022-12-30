@@ -1,9 +1,15 @@
 package main
 
 import (
+	"context"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
 	_ "net/http/pprof"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	log "github.com/sirupsen/logrus"
@@ -42,14 +48,35 @@ func main() {
 		defer app.pool.Close()
 	}
 
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGKILL, os.Interrupt)
+	defer stop()
+
+	g, gCtx := errgroup.WithContext(ctx)
+
 	log.Infof("server is starting at %s", app.conf.Address)
 	srv := &http.Server{
 		Addr:    app.conf.Address,
 		Handler: app.routes(),
 	}
-	go http.ListenAndServe(":8082", nil)
-	err := srv.ListenAndServe()
-	if err != nil {
-		log.Panic(err)
+	srv2 := &http.Server{
+		Addr:    ":8082",
+		Handler: nil,
 	}
+	g.Go(func() error {
+		return srv2.ListenAndServe()
+	})
+	g.Go(func() error {
+		return srv.ListenAndServe()
+	})
+	g.Go(func() error {
+		<-gCtx.Done()
+		_ = srv2.Shutdown(gCtx)
+		return srv.Shutdown(gCtx)
+	})
+
+	if err := g.Wait(); err != nil {
+		log.Error("server shutdown")
+	}
+
+	log.Info("application is shutdown")
 }

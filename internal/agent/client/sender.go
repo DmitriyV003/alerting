@@ -2,6 +2,7 @@ package client
 
 import (
 	"bytes"
+	"context"
 	"crypto/rsa"
 	"encoding/json"
 	"io"
@@ -28,17 +29,24 @@ func New(publicKey *rsa.PublicKey) Sender {
 	return sender
 }
 
-func (sender *Sender) SendWithInterval(url string, metrics *models.Health, duration time.Duration) {
+func (sender *Sender) SendWithInterval(ctx context.Context, url string, metrics *models.Health, duration time.Duration) {
 	ticker := time.NewTicker(duration)
+	defer ticker.Stop()
 
-	for range ticker.C {
-		metrics.Metrics.Range(func(key, value interface{}) bool {
-			metric, _ := value.(models.Metric)
+	for {
+		select {
+		case <-ticker.C:
+			metrics.Metrics.Range(func(key, value interface{}) bool {
+				metric, _ := value.(models.Metric)
 
-			_, err := sender.sendRequest(url, metric)
-			return err == nil
-		})
+				_, err := sender.sendRequest(url, metric)
+				return err == nil
+			})
+		case <-ctx.Done():
+			return
+		}
 	}
+
 }
 
 func (sender *Sender) sendRequest(url string, data interface{}) (*senderResponse, error) {
