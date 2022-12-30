@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -15,18 +16,23 @@ func NewPingService() *PingService {
 }
 
 // Ping check server availability
-func (s *PingService) Ping(address string) {
+func (s *PingService) Ping(ctx context.Context, address string) {
 	ticker := time.NewTicker(time.Second)
 	clientPing := http.Client{}
-	for range ticker.C {
-		err := s.send(&clientPing, address)
-		if err != nil {
-			log.Warn().Err(err).Msg("Ping Server")
-			continue
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			err := s.send(&clientPing, address)
+			if err != nil {
+				log.Warn().Err(err).Msg("Ping Server")
+			} else {
+				log.Info().Msg("Connected to server")
+				return
+			}
+		case <-ctx.Done():
+			return
 		}
-		log.Info().Msg("Connected to server")
-		ticker.Stop()
-		break
 	}
 }
 

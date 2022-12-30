@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"runtime"
@@ -84,21 +85,31 @@ func (metricService *MetricService) gatherAdditionalMetrics() {
 }
 
 // GatherMetricsByInterval Gather OS metric with given interval
-func (metricService *MetricService) GatherMetricsByInterval(duration time.Duration) {
+func (metricService *MetricService) GatherMetricsByInterval(ctx context.Context, duration time.Duration) {
 	ticker := time.NewTicker(duration)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		metricService.gatherMetrics()
+	for {
+		select {
+		case <-ticker.C:
+			metricService.gatherMetrics()
+		case <-ctx.Done():
+			return
+		}
 	}
 }
 
 // GatherAdditionalMetricsByInterval Gather additional metrics with interval
-func (metricService *MetricService) GatherAdditionalMetricsByInterval(duration time.Duration) {
+func (metricService *MetricService) GatherAdditionalMetricsByInterval(ctx context.Context, duration time.Duration) {
 	ticker := time.NewTicker(duration)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		metricService.gatherAdditionalMetrics()
+	for {
+		select {
+		case <-ticker.C:
+			metricService.gatherAdditionalMetrics()
+		case <-ctx.Done():
+			return
+		}
 	}
 }

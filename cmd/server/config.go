@@ -49,7 +49,7 @@ func (conf *Config) parseEnv() {
 	if err != nil {
 		log.Warn("Unable to parse path to config from ENV: ", err)
 	}
-	confPath := flag.String("config", "/home/dmitriy/GolandProjects/alerting/cmd/agent/config.json", "Config file")
+	confPath := flag.String("config", "", "Config file")
 	if confPath != nil && *confPath != "" {
 		confFile.Path = *confPath
 	}
@@ -69,11 +69,6 @@ func (conf *Config) parseEnv() {
 	conf.DatabaseDsn = jsonConfig.DatabaseDsn
 	conf.PrivateKey = jsonConfig.PrivateKey
 
-	err = env.Parse(conf)
-	if err != nil {
-		log.Error("Unable to parse ENV: ", err)
-	}
-
 	storeIntervalDuration, _ := time.ParseDuration(defaultStoreInterval)
 
 	address := flag.String("a", defaultAddress, "Server address")
@@ -86,26 +81,31 @@ func (conf *Config) parseEnv() {
 	flag.PrintDefaults()
 	flag.Parse()
 
-	if conf.Address == "" {
+	if *address != "" {
 		conf.Address = *address
 	}
-	if conf.StoreInterval.String() == "0s" {
+	if (*storeInterval).String() != "0s" {
 		conf.StoreInterval = *storeInterval
 	}
-	if conf.StoreFile == "" {
+	if *storeFile != "" {
 		conf.StoreFile = *storeFile
 	}
-	if conf.Restore == "" {
+	if *restore != "" {
 		conf.Restore = *restore
 	}
-	if conf.Key == "" {
+	if *key != "" {
 		conf.Key = *key
 	}
-	if conf.DatabaseDsn == "" {
+	if *databaseDsn != "" {
 		conf.DatabaseDsn = *databaseDsn
 	}
-	if conf.PrivateKey == "" {
+	if *privateKey != "" {
 		conf.PrivateKey = *privateKey
+	}
+
+	err = env.Parse(conf)
+	if err != nil {
+		log.Error("Unable to parse ENV: ", err)
 	}
 
 	log.WithFields(log.Fields{
