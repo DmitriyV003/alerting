@@ -44,6 +44,7 @@ const defaultDatabaseDsn = ""
 
 func (conf *Config) parseEnv() {
 	var jsonConfig JSONConfig
+	var envConfig Config
 	var confFile configFile
 	err := env.Parse(&confFile)
 	if err != nil {
@@ -69,43 +70,84 @@ func (conf *Config) parseEnv() {
 	conf.DatabaseDsn = jsonConfig.DatabaseDsn
 	conf.PrivateKey = jsonConfig.PrivateKey
 
-	storeIntervalDuration, _ := time.ParseDuration(defaultStoreInterval)
+	storeIntervalDuration, _ := time.ParseDuration("0s")
 
-	address := flag.String("a", defaultAddress, "Server address")
+	address := flag.String("a", "", "Server address")
 	storeInterval := flag.Duration("i", storeIntervalDuration, "Store data on disk interval")
-	storeFile := flag.String("f", defaultStoreFile, "File storage for data")
-	restore := flag.String("r", defaultRestore, "Restore data from file on restart")
-	key := flag.String("k", defaultKey, "Key for hashing")
-	databaseDsn := flag.String("d", defaultDatabaseDsn, "connection string to database")
+	storeFile := flag.String("f", "", "File storage for data")
+	restore := flag.String("r", "", "Restore data from file on restart")
+	key := flag.String("k", "", "Key for hashing")
+	databaseDsn := flag.String("d", "", "connection string to database")
 	privateKey := flag.String("crypto-key", "", "Private key")
-	flag.PrintDefaults()
 	flag.Parse()
 
-	if *address != "" {
+	if conf.Address == "" && *address != "" {
 		conf.Address = *address
 	}
-	if (*storeInterval).String() != "0s" {
+	if conf.StoreInterval.String() == "0s" && (*storeInterval).String() != "0s" {
 		conf.StoreInterval = *storeInterval
 	}
-	if *storeFile != "" {
+	if conf.StoreFile == "" && *storeFile != "" {
 		conf.StoreFile = *storeFile
 	}
-	if *restore != "" {
+	if conf.Restore == "" && *restore != "" {
 		conf.Restore = *restore
 	}
-	if *key != "" {
+	if conf.Key == "" && *key != "" {
 		conf.Key = *key
 	}
-	if *databaseDsn != "" {
+	if conf.DatabaseDsn == "" && *databaseDsn != "" {
 		conf.DatabaseDsn = *databaseDsn
 	}
-	if *privateKey != "" {
+	if conf.PrivateKey == "" && *privateKey != "" {
 		conf.PrivateKey = *privateKey
 	}
 
-	err = env.Parse(conf)
+	err = env.Parse(&envConfig)
 	if err != nil {
 		log.Error("Unable to parse ENV: ", err)
+	}
+
+	if envConfig.Address != "" {
+		conf.Address = envConfig.Address
+	}
+	if envConfig.StoreInterval.String() != "0s" {
+		conf.StoreInterval = envConfig.StoreInterval
+	}
+	if envConfig.StoreFile != "" {
+		conf.StoreFile = envConfig.StoreFile
+	}
+	if envConfig.Restore != "" {
+		conf.Restore = envConfig.Restore
+	}
+	if envConfig.Key != "" {
+		conf.Key = envConfig.Key
+	}
+	if envConfig.DatabaseDsn != "" {
+		conf.DatabaseDsn = envConfig.DatabaseDsn
+	}
+	if envConfig.PrivateKey != "" {
+		conf.PrivateKey = envConfig.PrivateKey
+	}
+
+	if conf.Address == "" {
+		conf.Address = defaultAddress
+	}
+	if conf.StoreInterval.String() == "0s" {
+		storeIntervalDuration, _ := time.ParseDuration(defaultStoreInterval)
+		conf.StoreInterval = storeIntervalDuration
+	}
+	if conf.StoreFile == "" {
+		conf.StoreFile = defaultStoreFile
+	}
+	if conf.Restore == "" {
+		conf.Restore = defaultRestore
+	}
+	if conf.Key == "" {
+		conf.Key = defaultKey
+	}
+	if conf.DatabaseDsn == "" {
+		conf.DatabaseDsn = defaultDatabaseDsn
 	}
 
 	log.WithFields(log.Fields{
