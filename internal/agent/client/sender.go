@@ -5,24 +5,29 @@ import (
 	"context"
 	"crypto/rsa"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"time"
 
 	"github.com/dmitriy/alerting/internal/agent/models"
 	"github.com/dmitriy/alerting/internal/helpers"
+	"github.com/dmitriy/alerting/internal/proto"
+	"github.com/dmitriy/alerting/internal/server/model"
 	"github.com/rs/zerolog/log"
 )
 
 type Sender struct {
-	client    http.Client
-	publicKey *rsa.PublicKey
+	client       http.Client
+	publicKey    *rsa.PublicKey
+	metricClient proto.MetricsClient
 }
 
-func New(publicKey *rsa.PublicKey) Sender {
+func New(publicKey *rsa.PublicKey, metricClient proto.MetricsClient) Sender {
 	sender := Sender{
-		client:    http.Client{},
-		publicKey: publicKey,
+		client:       http.Client{},
+		publicKey:    publicKey,
+		metricClient: metricClient,
 	}
 	sender.client.Timeout = 1 * time.Second
 
@@ -39,14 +44,54 @@ func (sender *Sender) SendWithInterval(ctx context.Context, url string, metrics 
 			metrics.Metrics.Range(func(key, value interface{}) bool {
 				metric, _ := value.(models.Metric)
 
-				_, err := sender.sendRequest(url, metric)
-				return err == nil
+				if sender.metricClient != nil {
+					go func() {
+						err := sender.sendRequestViaGrpc(ctx, metric)
+						if err != nil {
+							log.Error().Err(err).Msg("error to send request via gRPC")
+						}
+					}()
+				}
+
+				go func() {
+					_, err := sender.sendRequest(url, metric)
+					if err != nil {
+						log.Error().Err(err).Msg("error to send request via http")
+					}
+				}()
+
+				return true
 			})
 		case <-ctx.Done():
 			return
 		}
 	}
+}
 
+func (sender *Sender) sendRequestViaGrpc(ctx context.Context, metric models.Metric) error {
+	var value string
+	if metric.Type == model.GaugeType {
+		value = fmt.Sprint(*metric.FloatValue)
+	} else if metric.Type == models.CounterType {
+		value = fmt.Sprint(*metric.IntValue)
+	}
+	_, err := sender.metricClient.UpdateMetric(ctx, &proto.UpdateMetricRequest{
+		Type:  string(metric.Type),
+		Name:  metric.Name,
+		Value: value,
+	})
+	if err != nil {
+		log.Error().Fields(map[string]interface{}{
+			"Message": err.Error(),
+		}).Msg("Error Send Metric via gRPC")
+	}
+	log.Info().Fields(map[string]interface{}{
+		"Name":  metric.Name,
+		"Type":  metric.Type,
+		"Value": value,
+	}).Msg("Send Metric via gRPC")
+
+	return err
 }
 
 func (sender *Sender) sendRequest(url string, data interface{}) (*senderResponse, error) {

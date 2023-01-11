@@ -13,6 +13,7 @@ import (
 
 type JSONConfig struct {
 	Address        string           `json:"address"`
+	GrpcAddress    string           `json:"grpc_address"`
 	ReportInterval helpers.Duration `json:"report_interval"`
 	PollInterval   helpers.Duration `json:"poll_interval"`
 	Key            string           `json:"key"`
@@ -21,6 +22,7 @@ type JSONConfig struct {
 
 type Config struct {
 	Address        string        `env:"ADDRESS"`
+	GrpcAddress    string        `env:"GRPC_ADDRESS"`
 	ReportInterval time.Duration `env:"REPORT_INTERVAL"`
 	PollInterval   time.Duration `env:"POLL_INTERVAL"`
 	Key            string        `env:"KEY"`
@@ -57,6 +59,7 @@ func (conf *Config) parseEnv() {
 
 	conf.Key = jsonConfig.Key
 	conf.Address = jsonConfig.Address
+	conf.GrpcAddress = jsonConfig.GrpcAddress
 	conf.ReportInterval = jsonConfig.ReportInterval.Duration
 	conf.PollInterval = jsonConfig.PollInterval.Duration
 	conf.PublicKey = jsonConfig.PublicKey
@@ -76,12 +79,16 @@ func (conf *Config) parseEnv() {
 	reportIntervalFlag := flag.Duration("r", reportInterval, "Report Interval")
 	pollIntervalFlag := flag.Duration("p", pollInterval, "Poll Interval")
 	publicKey := flag.String("crypto-key", "", "Public key")
+	grpcAddress := flag.String("grpc-address", "", "gRPC address")
 
 	flag.PrintDefaults()
 	flag.Parse()
 
 	if *address != "" {
 		conf.Address = *address
+	}
+	if *grpcAddress != "" {
+		conf.GrpcAddress = *grpcAddress
 	}
 	if *key != "" {
 		conf.Key = *key
