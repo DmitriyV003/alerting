@@ -9,10 +9,13 @@ import (
 	"syscall"
 
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/dmitriy/alerting/internal/agent/client"
 	"github.com/dmitriy/alerting/internal/agent/service"
 	"github.com/dmitriy/alerting/internal/helpers"
+	"github.com/dmitriy/alerting/internal/proto"
 	"github.com/rs/zerolog/log"
 )
 
@@ -55,7 +58,20 @@ func main() {
 
 	metricService := service.NewMetricService(app.conf.Key)
 	pingService := service.NewPingService()
-	sender := client.New(publicKey)
+
+	var gRPC *grpc.ClientConn
+	if app.conf.GrpcAddress != "" {
+		gRPC, err = grpc.Dial(app.conf.GrpcAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			log.Warn().Err(err).Msg("grpc server is unavailable")
+		}
+	}
+
+	var metricClient proto.MetricsClient
+	if gRPC != nil {
+		metricClient = proto.NewMetricsClient(gRPC)
+	}
+	sender := client.New(publicKey, metricClient)
 
 	log.Info().Msgf(
 		"Agent starting. Poll interval: %s; Report interval: %s",
@@ -73,7 +89,7 @@ func main() {
 		return nil
 	})
 	g.Go(func() error {
-		sender.SendWithInterval(gCtx, fmt.Sprintf("http://%s/update", app.conf.Address), &metricService.Health, app.conf.ReportInterval)
+		sender.SendWithInterval(gCtx, app.conf.Address, &metricService.Health, app.conf.ReportInterval)
 		return nil
 	})
 
@@ -87,6 +103,13 @@ func main() {
 	g.Go(func() error {
 		<-gCtx.Done()
 		return srv2.Shutdown(gCtx)
+	})
+	g.Go(func() error {
+		<-gCtx.Done()
+		if gRPC != nil {
+			return gRPC.Close()
+		}
+		return nil
 	})
 
 	if err := g.Wait(); err != nil {

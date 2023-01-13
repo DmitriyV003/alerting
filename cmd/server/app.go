@@ -6,12 +6,17 @@ import (
 	"net/http"
 	"strconv"
 
+	"google.golang.org/grpc"
+
+	"github.com/dmitriy/alerting/internal/server/service"
+
 	"github.com/dmitriy/alerting/internal/helpers"
+	"github.com/dmitriy/alerting/internal/proto"
+	"github.com/dmitriy/alerting/internal/server"
 	middleware2 "github.com/dmitriy/alerting/internal/server/middleware"
 
 	"github.com/dmitriy/alerting/internal/hasher"
 	"github.com/dmitriy/alerting/internal/server/handlers"
-	"github.com/dmitriy/alerting/internal/server/service"
 	"github.com/dmitriy/alerting/internal/server/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -39,6 +44,7 @@ func (app *App) routes() http.Handler {
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.StripSlashes)
+	router.Use(middleware2.TrustedNet(app.conf.TrustedNet))
 	router.Use(middleware.Compress(5))
 	router.Use(middleware2.Decrypt(privateKey))
 	router.Use(middleware.Heartbeat("/heartbeat"))
@@ -54,6 +60,8 @@ func (app *App) routes() http.Handler {
 		log.Fatal("unknown storage type: ", err)
 	}
 
+	app.restoreData(store)
+
 	mHasher := hasher.New(app.conf.Key)
 	updateMetricHandler := handlers.NewUpdateMetricHandler(store, mHasher)
 	getAllMetricsHandler := handlers.NewGetAllMetricHandler(store)
@@ -61,16 +69,6 @@ func (app *App) routes() http.Handler {
 	getMetricByTypeAndNameHandler := handlers.NewGetMetricByTypeAndNameHandler(store, app.conf.Key)
 	pingHandler := handlers.NewPingHandler(app.pool, context.Background())
 	updateMetricsCollectionHandler := handlers.NewUpdateMetricsCollectionHandler(store)
-
-	restore, _ := strconv.ParseBool(app.conf.Restore)
-	fileSaver := service.NewFileSaver(app.conf.StoreFile, app.conf.StoreInterval, restore, store)
-	fileSaver.Restore()
-
-	if app.conf.StoreInterval.String() == "0s" {
-		store.AddOnUpdateListener(fileSaver.StoreAllData)
-	} else {
-		go fileSaver.StoreAllDataWithInterval()
-	}
 
 	router.Get("/", getAllMetricsHandler.Handle)
 	router.Get("/value/{type}/{name}", getMetricValueByTypeAndNameHandler.Handle)
@@ -82,6 +80,32 @@ func (app *App) routes() http.Handler {
 	router.Get("/ping", pingHandler.Handle)
 
 	return router
+}
+
+func (app *App) restoreData(store storage.MetricStorage) {
+	restore, _ := strconv.ParseBool(app.conf.Restore)
+	fileSaver := service.NewFileSaver(app.conf.StoreFile, app.conf.StoreInterval, restore, store)
+	fileSaver.Restore()
+
+	if app.conf.StoreInterval.String() == "0s" {
+		store.AddOnUpdateListener(fileSaver.StoreAllData)
+	} else {
+		go fileSaver.StoreAllDataWithInterval()
+	}
+}
+
+func (app *App) applyGrpcServices(grpcServer *grpc.Server) {
+	mHasher := hasher.New(app.conf.Key)
+	storerFactory := storage.StorerFactory{
+		Pool:        app.pool,
+		FileURL:     app.conf.StoreFile,
+		DatabaseDsn: app.conf.DatabaseDsn,
+	}
+	store, err := storerFactory.Storage(nil)
+	if err != nil {
+		log.Fatal("unknown storage type: ", err)
+	}
+	proto.RegisterMetricsServer(grpcServer, server.NewMetricServer(store, mHasher, app.conf.Key))
 }
 
 func (app *App) config() {

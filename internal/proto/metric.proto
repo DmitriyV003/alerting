@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "internal/proto";
+
+message GetMetricValueByTypeAndNameRequest {
+  string type = 1;
+  string name = 2;
+}
+
+message GetMetricValueByTypeAndNameResponse {
+  double value = 2;
+}
+
+message UpdateMetricRequest {
+  string type = 1;
+  string name = 2;
+  string value = 3;
+  string hash = 4;
+}
+
+message UpdateMetricResponse {
+  string hash = 1;
+}
+
+message GetMetricByTypeAndNameRequest {
+  string name = 1;
+  string type = 2;
+}
+
+message GetMetricByTypeAndNameResponse {
+  string name = 1;
+  string type = 2;
+  int64 delta = 3;
+  double value = 4;
+  string hash = 5;
+}
+
+message UpdateMetricsCollectionRequest {
+  repeated UpdateMetricRequest data = 1;
+}
+
+message UpdateMetricsCollectionResponse {}
+
+service Metrics {
+  rpc GetMetricValueByTypeAndName(GetMetricValueByTypeAndNameRequest) returns (GetMetricValueByTypeAndNameResponse);
+  rpc UpdateMetric(UpdateMetricRequest) returns (UpdateMetricResponse);
+  rpc GetMetricByTypeAndName(GetMetricByTypeAndNameRequest) returns (GetMetricByTypeAndNameResponse);
+  rpc UpdateMetricsCollection(UpdateMetricsCollectionRequest) returns (UpdateMetricsCollectionResponse);
+}

@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -10,6 +12,8 @@ import (
 	_ "net/http/pprof"
 
 	"golang.org/x/sync/errgroup"
+
+	"google.golang.org/grpc"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	log "github.com/sirupsen/logrus"
@@ -53,6 +57,10 @@ func main() {
 
 	g, gCtx := errgroup.WithContext(ctx)
 
+	var listen net.Listener
+	var err error
+	var grpcServer *grpc.Server
+
 	log.Infof("server is starting at %s", app.conf.Address)
 	srv := &http.Server{
 		Addr:    app.conf.Address,
@@ -62,6 +70,28 @@ func main() {
 		Addr:    ":8082",
 		Handler: nil,
 	}
+
+	g.Go(func() error {
+		if app.conf.GrpcAddress == "" {
+			return nil
+		}
+		grpcServer = grpc.NewServer()
+		app.applyGrpcServices(grpcServer)
+		listen, err = net.Listen("tcp", app.conf.GrpcAddress)
+		return err
+	})
+	g.Go(func() error {
+		if app.conf.GrpcAddress != "" {
+			log.Info("Сервер gRPC начал работу")
+			if err := grpcServer.Serve(listen); err != nil {
+				log.Fatal(err, "gRPC server error")
+			}
+			return err
+		}
+
+		return nil
+	})
+
 	g.Go(func() error {
 		return srv2.ListenAndServe()
 	})
@@ -69,13 +99,24 @@ func main() {
 		return srv.ListenAndServe()
 	})
 	g.Go(func() error {
+		var err error
 		<-gCtx.Done()
-		_ = srv2.Shutdown(gCtx)
-		return srv.Shutdown(gCtx)
+		err = srv2.Shutdown(gCtx)
+		if app.conf.GrpcAddress != "" {
+			grpcServer.Stop()
+			herr := listen.Close()
+			err = fmt.Errorf("listen error: %w", herr)
+		}
+
+		yerr := srv.Shutdown(gCtx)
+		if yerr != nil {
+			err = fmt.Errorf("srv shutdown error: %w", yerr)
+		}
+		return err
 	})
 
 	if err := g.Wait(); err != nil {
-		log.Error("server shutdown")
+		log.Warnf("server shutdown: %v", err)
 	}
 
 	log.Info("application is shutdown")

@@ -13,6 +13,8 @@ import (
 
 type JSONConfig struct {
 	Address       string           `json:"address"`
+	GrpcAddress   string           `json:"grpc_address"`
+	TrustedNet    string           `json:"trusted_net"`
 	StoreInterval helpers.Duration `json:"store_interval"`
 	StoreFile     string           `json:"store_file"`
 	Restore       string           `json:"restore"`
@@ -23,6 +25,8 @@ type JSONConfig struct {
 
 type Config struct {
 	Address       string        `env:"ADDRESS"`
+	GrpcAddress   string        `env:"GRPC_ADDRESS"`
+	TrustedNet    string        `env:"TRUSTED_NET"`
 	StoreInterval time.Duration `env:"STORE_INTERVAL"`
 	StoreFile     string        `env:"STORE_FILE"`
 	Restore       string        `env:"RESTORE"`
@@ -41,6 +45,7 @@ const defaultStoreFile = "/tmp/devops-metrics-db.json"
 const defaultRestore = "true"
 const defaultKey = ""
 const defaultDatabaseDsn = ""
+const defaultTrustedNet = ""
 
 func (conf *Config) parseEnv() {
 	var jsonConfig JSONConfig
@@ -63,16 +68,20 @@ func (conf *Config) parseEnv() {
 	}
 
 	conf.Address = jsonConfig.Address
+	conf.TrustedNet = jsonConfig.TrustedNet
 	conf.StoreInterval = jsonConfig.StoreInterval.Duration
 	conf.StoreFile = jsonConfig.StoreFile
 	conf.Restore = jsonConfig.Restore
 	conf.Key = jsonConfig.Key
 	conf.DatabaseDsn = jsonConfig.DatabaseDsn
 	conf.PrivateKey = jsonConfig.PrivateKey
+	conf.GrpcAddress = jsonConfig.GrpcAddress
 
 	storeIntervalDuration, _ := time.ParseDuration("0s")
 
 	address := flag.String("a", "", "Server address")
+	grpcAddress := flag.String("grpc-address", "", "gRPC Server address")
+	trustedNet := flag.String("trusted-net", "", "trusted net")
 	storeInterval := flag.Duration("i", storeIntervalDuration, "Store data on disk interval")
 	storeFile := flag.String("f", "", "File storage for data")
 	restore := flag.String("r", "", "Restore data from file on restart")
@@ -83,6 +92,12 @@ func (conf *Config) parseEnv() {
 
 	if conf.Address == "" && *address != "" {
 		conf.Address = *address
+	}
+	if conf.TrustedNet == "" && *trustedNet != "" {
+		conf.TrustedNet = *trustedNet
+	}
+	if conf.GrpcAddress == "" && *grpcAddress != "" {
+		conf.GrpcAddress = *grpcAddress
 	}
 	if conf.StoreInterval.String() == "0s" && (*storeInterval).String() != "0s" {
 		conf.StoreInterval = *storeInterval
@@ -111,6 +126,12 @@ func (conf *Config) parseEnv() {
 	if envConfig.Address != "" {
 		conf.Address = envConfig.Address
 	}
+	if envConfig.TrustedNet != "" {
+		conf.TrustedNet = envConfig.TrustedNet
+	}
+	if envConfig.GrpcAddress != "" {
+		conf.GrpcAddress = envConfig.GrpcAddress
+	}
 	if envConfig.StoreInterval.String() != "0s" {
 		conf.StoreInterval = envConfig.StoreInterval
 	}
@@ -132,6 +153,9 @@ func (conf *Config) parseEnv() {
 
 	if conf.Address == "" {
 		conf.Address = defaultAddress
+	}
+	if conf.TrustedNet == "" {
+		conf.TrustedNet = defaultTrustedNet
 	}
 	if conf.StoreInterval.String() == "0s" {
 		storeIntervalDuration, _ := time.ParseDuration(defaultStoreInterval)
