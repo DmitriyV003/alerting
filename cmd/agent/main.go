@@ -89,7 +89,7 @@ func main() {
 		return nil
 	})
 	g.Go(func() error {
-		sender.SendWithInterval(gCtx, fmt.Sprintf("http://%s/update", app.conf.Address), &metricService.Health, app.conf.ReportInterval)
+		sender.SendWithInterval(gCtx, app.conf.Address, &metricService.Health, app.conf.ReportInterval)
 		return nil
 	})
 

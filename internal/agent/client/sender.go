@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"time"
 
@@ -34,7 +35,7 @@ func New(publicKey *rsa.PublicKey, metricClient proto.MetricsClient) Sender {
 	return sender
 }
 
-func (sender *Sender) SendWithInterval(ctx context.Context, url string, metrics *models.Health, duration time.Duration) {
+func (sender *Sender) SendWithInterval(ctx context.Context, address string, metrics *models.Health, duration time.Duration) {
 	ticker := time.NewTicker(duration)
 	defer ticker.Stop()
 
@@ -54,7 +55,7 @@ func (sender *Sender) SendWithInterval(ctx context.Context, url string, metrics 
 				}
 
 				go func() {
-					_, err := sender.sendRequest(url, metric)
+					_, err := sender.sendRequest(address, metric)
 					if err != nil {
 						log.Error().Err(err).Msg("error to send request via http")
 					}
@@ -94,7 +95,7 @@ func (sender *Sender) sendRequestViaGrpc(ctx context.Context, metric models.Metr
 	return err
 }
 
-func (sender *Sender) sendRequest(url string, data interface{}) (*senderResponse, error) {
+func (sender *Sender) sendRequest(address string, data interface{}) (*senderResponse, error) {
 	byteData, err := json.Marshal(data)
 	if err != nil {
 		log.Error().Err(err).Msg("Unknown error during json.Marshal")
@@ -109,14 +110,25 @@ func (sender *Sender) sendRequest(url string, data interface{}) (*senderResponse
 		}
 	}
 
-	request, _ := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(byteData))
+	h, _, err := net.SplitHostPort(address)
+	if err != nil {
+		return nil, fmt.Errorf("error to split hostand port: %w", err)
+	}
+	ips, err := net.LookupIP(h)
+	if err != nil {
+		return nil, fmt.Errorf("error to lookuo ip: %w", err)
+	}
+
+	request, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/update", address), bytes.NewBuffer(byteData))
 	request.Header.Add("Content-Type", "application/json")
+	request.Header.Add("X-Real-IP", ips[0].String())
+
 	res, err := sender.client.Do(request)
 	if err != nil {
 		log.Warn().Fields(map[string]interface{}{
 			"StatusCode": res.StatusCode,
 			"Error":      err.Error(),
-			"URL":        url,
+			"Address":    address,
 			"Data":       data,
 			"Method":     "POST",
 		}).Msg("Request fail")
@@ -139,7 +151,7 @@ func (sender *Sender) sendRequest(url string, data interface{}) (*senderResponse
 		"Response":   response,
 		"StatusCode": res.StatusCode,
 		"Method":     "POST",
-		"URL":        url,
+		"Address":    address,
 		"Data":       data,
 	}).Msg("Send Metric")
 

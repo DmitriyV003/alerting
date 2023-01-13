@@ -44,6 +44,7 @@ func (app *App) routes() http.Handler {
 	router.Use(middleware.Logger)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.StripSlashes)
+	router.Use(middleware2.TrustedNet(app.conf.TrustedNet))
 	router.Use(middleware.Compress(5))
 	router.Use(middleware2.Decrypt(privateKey))
 	router.Use(middleware.Heartbeat("/heartbeat"))
